@@ -675,8 +675,17 @@
   const SUPABASE_URL = 'https://onggaqxuriybodtyavsd.supabase.co';
   const SUPABASE_KEY = 'sb_publishable__D6jwlREF6WQiFeFZe6j1A_0N59qzPr';
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  const WAKE_HOUR  = 8;
-  const SLEEP_HOUR = 24;
+  // [Sun, Mon, Tue, Wed, Thu, Fri, Sat] — hours as decimals (e.g. 8.5 = 8:30 AM, 24 = midnight, 25 = 1 AM)
+  const SCHEDULE = [
+    { wake: 9,    sleep: 24    }, // Sunday
+    { wake: 8.5,  sleep: 22.5  }, // Monday   8:30 AM – 10:30 PM
+    { wake: 6,    sleep: 24    }, // Tuesday  6:00 AM – 12:00 AM
+    { wake: 8.5,  sleep: 22.5  }, // Wednesday 8:30 AM – 10:30 PM
+    { wake: 6,    sleep: 22.5  }, // Thursday 6:00 AM – 10:30 PM
+    { wake: 6,    sleep: 24    }, // Friday   6:00 AM – 12:00 AM
+    { wake: 9,    sleep: 25    }, // Saturday 9:00 AM – 1:00 AM
+  ];
+  function getTodaySchedule() { return SCHEDULE[new Date().getDay()]; }
   const RING_C = 2 * Math.PI * 52;
 
   /* ── Storage ────────────────────────────────────────────────── */
@@ -780,6 +789,7 @@
   function updateDayBar() {
     const now = new Date();
     const hours = now.getHours() + now.getMinutes()/60 + now.getSeconds()/3600;
+    const { wake: WAKE_HOUR, sleep: SLEEP_HOUR } = getTodaySchedule();
     const fill = document.getElementById('ringFill');
     const ringLeft = document.querySelector('.day-ring-left');
     fill.style.strokeDasharray = RING_C;
