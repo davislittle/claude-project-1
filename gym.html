@@ -8,20 +8,22 @@
 <script>
 const CONFIG = {
   appTitle: "Progressive Overload Coach",
-  units: "kg",
+  configVersion: 2,
+  units: "lbs",
   gyms: [
-    { id: "home",  name: "Home Gym" },
-    { id: "comm",  name: "Commercial Gym" }
+    { id: "football", name: "Football Weight Room" },
+    { id: "rec",      name: "The Rec Center" },
+    { id: "home",     name: "At Home" }
   ],
   days: [
-    { id: "push", name: "Push" },
-    { id: "pull", name: "Pull" },
-    { id: "legs", name: "Legs" }
+    { id: "fullbody",  name: "Full Body" },
+    { id: "chest_tri", name: "Chest & Triceps" },
+    { id: "back_bi",   name: "Back & Biceps" }
   ],
-  splitRotation: ["push", "pull", "legs", "rest"],
+  splitRotation: ["Full Body", "Chest & Triceps", "Full Body", "Back & Biceps", "Full Body", "Rest", "Rest"],
   splitAnchor: {
-    date: "2026-05-12",
-    splitId: "rest"
+    date: "2026-06-09",
+    splitId: "fullbody"
   },
   upgradeAtReps: 8,
   composition: {
@@ -30,15 +32,11 @@ const CONFIG = {
     windowDays: 30
   },
   defaultExercises: [
-    { name: "Bench press",       gym: "comm", day: "push", repMin: 5, repMax: 8,  step: 2.5,  startWeight: 60 },
-    { name: "Overhead press",    gym: "comm", day: "push", repMin: 5, repMax: 8,  step: 2.5,  startWeight: 35 },
-    { name: "Tricep pushdown",   gym: "comm", day: "push", repMin: 8, repMax: 12, step: 2.5,  startWeight: 25 },
-    { name: "Pull-ups",          gym: "both", day: "pull", repMin: 5, repMax: 10, step: 1,    startWeight: 0, bw: true },
-    { name: "Barbell row",       gym: "comm", day: "pull", repMin: 6, repMax: 10, step: 2.5,  startWeight: 50 },
-    { name: "Bicep curl",        gym: "comm", day: "pull", repMin: 8, repMax: 12, step: 1.25, startWeight: 15 },
-    { name: "Back squat",        gym: "comm", day: "legs", repMin: 5, repMax: 8,  step: 5,    startWeight: 80 },
-    { name: "Romanian deadlift", gym: "comm", day: "legs", repMin: 6, repMax: 10, step: 5,    startWeight: 60 },
-    { name: "Leg press",         gym: "comm", day: "legs", repMin: 8, repMax: 12, step: 5,    startWeight: 100 }
+    { name: "Bench Press",    gym: "football", day: "chest_tri", repMin: 8,  repMax: 8,  step: 5,   startWeight: 135 },
+    { name: "Chest Flies",    gym: "rec",      day: "chest_tri", repMin: 12, repMax: 12, step: 5,   startWeight: 100 },
+    { name: "Tricep Machine", gym: "rec",      day: "chest_tri", repMin: 10, repMax: 10, step: 5,   startWeight: 50  },
+    { name: "Dips",           gym: "both",     day: "chest_tri", repMin: 10, repMax: 10, step: 1,   startWeight: 0,  bw: true },
+    { name: "Plank",          gym: "both",     day: "chest_tri", repMin: 1,  repMax: 3,  step: 1,   startWeight: 0,  bw: true }
   ]
 };
 </script>
@@ -781,7 +779,19 @@ img, video, canvas, svg { max-width: 100%; }
   }
   function normalize(s) {
     s = s || {};
-    s.units = s.units || CONFIG.units || 'kg';
+    if ((s.configVersion || 0) < (CONFIG.configVersion || 0)) {
+      s.units = CONFIG.units;
+      s.gyms = CONFIG.gyms.slice();
+      s.days = CONFIG.days.slice();
+      s.exercises = buildDefaultExercises();
+      s.logs = {};
+      s.filterGym = CONFIG.gyms[0].id;
+      s.filterDay = CONFIG.days[0].id;
+      s.splitRotation = null;
+      s.splitAnchor = null;
+      s.configVersion = CONFIG.configVersion;
+    }
+    s.units = s.units || CONFIG.units || 'lbs';
     s.gyms  = (Array.isArray(s.gyms)  && s.gyms.length)  ? s.gyms  : CONFIG.gyms.slice();
     s.days  = (Array.isArray(s.days)  && s.days.length)  ? s.days  : CONFIG.days.slice();
     s.exercises = Array.isArray(s.exercises) ? s.exercises : buildDefaultExercises();
