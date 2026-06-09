@@ -608,7 +608,7 @@
     <div class="day-ring-right">
       <div class="ring-status"    id="ringStatus">😴 Still sleeping</div>
       <div class="ring-remaining" id="ringRemaining"></div>
-      <div class="ring-hours">8:00 AM – 12:00 AM</div>
+      <div class="ring-hours" id="ringHours">8:00 AM – 12:00 AM</div>
     </div>
   </div>
 
@@ -794,6 +794,8 @@
     const ringLeft = document.querySelector('.day-ring-left');
     fill.style.strokeDasharray = RING_C;
     document.getElementById('ringClock').textContent = fmtClock(now);
+    function fmtHour(h) { const hh=Math.floor(h%24), mm=Math.round((h%1)*60), ampm=hh<12?'AM':'PM', hr=hh%12||12; return hr+(mm?':'+String(mm).padStart(2,'0'):'')+' '+ampm; }
+    document.getElementById('ringHours').textContent = fmtHour(WAKE_HOUR) + ' – ' + fmtHour(SLEEP_HOUR);
 
     if (hours < WAKE_HOUR) {
       fill.style.strokeDashoffset = RING_C;
