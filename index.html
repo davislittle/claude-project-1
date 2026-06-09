@@ -550,6 +550,16 @@
       font-size: 11px; font-weight: 700; text-transform: uppercase;
       font-variant-numeric: tabular-nums; color: var(--text-tertiary); letter-spacing: 0.04em;
     }
+
+  /* ── Tab bar ─────────────────────────────────────────────────── */
+  .tabbar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 999; background: rgba(18,18,24,0.88); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); border-top: 1px solid rgba(255,255,255,0.07); padding-bottom: env(safe-area-inset-bottom,0); }
+  .tabbar-inner { display: flex; justify-content: center; gap: 0; max-width: 480px; margin: 0 auto; }
+  .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 10px 8px 8px; text-decoration: none; color: rgba(255,255,255,0.45); font-size: 11px; font-weight: 500; letter-spacing: 0.02em; transition: color 0.15s; }
+  .tab:hover { color: rgba(255,255,255,0.7); }
+  .tab-active, .tab[aria-current="page"] { color: #fff; }
+  .tab-icon { font-size: 20px; line-height: 1; }
+  .tab-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+  body { padding-bottom: calc(60px + env(safe-area-inset-bottom,0)) !important; }
   </style>
 </head>
 <body>
@@ -1148,5 +1158,19 @@
   }
   init();
 </script>
+
+<nav class="tabbar" aria-label="App navigation">
+  <div class="tabbar-inner">
+    <a href="index.html" class="tab tab-active" aria-current="page">
+      <span class="tab-icon">📋</span>
+      <span class="tab-label">Dashboard</span>
+    </a>
+    <a href="gym.html" class="tab">
+      <span class="tab-icon">🏋️</span>
+      <span class="tab-label">Gym</span>
+    </a>
+  </div>
+</nav>
+
 </body>
 </html>
