@@ -1190,96 +1190,114 @@ img, video, canvas, svg { max-width: 100%; }
   let wtData=loadWeights();
   function wtDateKey(d) { return d.toISOString().slice(0,10); }
   function wtRender() {
-    const u=state.units; $('wtUnit').textContent=u; $('wtInputUnit').textContent=u;
+    const u=state.units;
+    [$('wtUnit'),$('wtUnitStatic')].forEach(el=>{ if(el) el.textContent=u; });
+    if($('wtLockedValue')) $('wtLockedValue').textContent='— '+u;
     const sorted=[...wtData].sort((a,b)=>a.date.localeCompare(b.date));
-    const tbody=$('wtTableBody'); tbody.innerHTML='';
-    const display=[...sorted].reverse().slice(0,30);
-    display.forEach(row=>{
-      const dt=new Date(row.date+'T12:00:00'), da=Math.floor((Date.now()-dt.getTime())/86400000);
-      const ago=da===0?'today':da===1?'yesterday':da+' days ago';
-      const tr=document.createElement('tr');
-      tr.innerHTML='<td>'+row.date+'</td><td>'+row.weight+'</td><td style="color:var(--text-3)">'+ago+'</td><td><button class="po-hist-del" data-date="'+row.date+'" aria-label="Delete entry">×</button></td>';
-      tbody.appendChild(tr);
-    });
-    tbody.querySelectorAll('.po-hist-del').forEach(b=>{
-      b.addEventListener('click',()=>{ if(!confirm('Delete this entry?')) return; wtData=wtData.filter(r=>r.date!==b.dataset.date); saveWeights(wtData); wtRender(); });
-    });
-    const empty=$('wtEmpty'), table=$('wtTable'); if(sorted.length){ empty.style.display='none'; table.style.display=''; } else { empty.style.display='block'; table.style.display='none'; }
-    // sparkline
-    const svg=$('wtSpark'), sparkEmpty=$('wtSparkEmpty');
-    const pts30=sorted.slice(-30);
-    if(pts30.length<2){ svg.style.display='none'; sparkEmpty.style.display='block'; } else {
-      svg.style.display='block'; sparkEmpty.style.display='none';
-      const vals=pts30.map(r=>r.weight);
+    const todayKey=wtDateKey(new Date()), todayEntry=wtData.find(r=>r.date===todayKey);
+    // header num
+    if(sorted.length) { $('wtNum').textContent=sorted[sorted.length-1].weight; $('wtNum').style.display=''; }
+    else { $('wtNum').textContent='—'; }
+    // delta
+    const deltaEl=$('wtDelta');
+    if(sorted.length>=2) { const diff=(sorted[sorted.length-1].weight-sorted[sorted.length-2].weight).toFixed(1); deltaEl.textContent=(diff>=0?'+':'')+diff+' '+u; deltaEl.classList.remove('hidden'); } else deltaEl.classList.add('hidden');
+    // streak
+    const streakEl=$('wtStreak'), streakNumEl=$('wtStreakNum');
+    let streak=0; const today=new Date(); for(let i=0;i<90;i++){ const dk=wtDateKey(new Date(today.getTime()-i*86400000)); if(wtData.find(r=>r.date===dk)) streak++; else break; }
+    if(streak>0){ streakNumEl.textContent=streak+' day streak'; streakEl.classList.remove('hidden'); } else streakEl.classList.add('hidden');
+    // empty / chart
+    if(!sorted.length){ $('wtEmpty').style.display=''; $('wtChartWrap').classList.add('hidden'); $('wtLegend').classList.add('hidden'); }
+    else {
+      $('wtEmpty').style.display='none'; $('wtChartWrap').classList.remove('hidden'); $('wtLegend').classList.remove('hidden');
+      $('wtMeta').textContent=sorted.length+' entr'+(sorted.length===1?'y':'ies');
+      const pts=sorted.slice(-30); const vals=pts.map(r=>r.weight);
       const mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), range=mx-mn||1;
-      const W=300,H=80,pad=4;
-      const points=vals.map((v,i)=>({x:pad+(W-pad*2)*(i/(vals.length-1)),y:H-pad-(H-pad*2)*((v-mn)/range)}));
-      const ln=points.map((p,i)=>(i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');
-      const fill=ln+' L'+points[points.length-1].x.toFixed(1)+' '+H+' L'+points[0].x.toFixed(1)+' '+H+' Z';
-      svg.innerHTML='<defs><linearGradient id="wtGrad" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="rgba(255,255,255,0.15)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></linearGradient></defs><path class="po-spark-fill" d="'+fill+'"/><path class="po-spark-line" d="'+ln+'"/>';
+      $('wtYAxisMax').textContent=mx.toFixed(1); $('wtYAxisMin').textContent=mn.toFixed(1);
+      const W=320,H=110,padX=0,padY=10;
+      const cx=(v,i)=>padX+(W-padX*2)*(i/(pts.length-1||1));
+      const cy=(v)=>H-padY-(H-padY*2)*((v-mn)/range);
+      const linePts=pts.map((p,i)=>({x:cx(p.weight,i),y:cy(p.weight)}));
+      const ln=linePts.map((p,i)=>(i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');
+      const fill=ln+' L'+linePts[linePts.length-1].x.toFixed(1)+' '+H+' L'+linePts[0].x.toFixed(1)+' '+H+' Z';
+      const dots=linePts.map(p=>'<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="3" fill="#6ee7b7"/>').join('');
+      $('wtChartContent').innerHTML='<path fill="url(#wtFill)" d="'+fill+'"/><path stroke="#6ee7b7" stroke-width="2" fill="none" d="'+ln+'"/>'+dots;
     }
-    // trend
-    if(sorted.length>1){ const first=sorted[0].weight, last=sorted[sorted.length-1].weight, diff=(last-first).toFixed(1); $('wtTrendText').textContent=(diff>=0?'+':'')+diff+' '+u+' since start'; $('wtTrendWrap').style.display=''; } else $('wtTrendWrap').style.display='none';
-    const todayEntry=wtData.find(r=>r.date===wtDateKey(new Date())); $('wtInput').value=todayEntry?todayEntry.weight:'';
+    // locked / input toggle
+    if(todayEntry){ $('wtLocked').classList.remove('hidden'); $('wtInputRow').classList.add('hidden'); $('wtLockedValue').textContent=todayEntry.weight+' '+u; }
+    else { $('wtLocked').classList.add('hidden'); $('wtInputRow').classList.remove('hidden'); $('wtInput').value=''; }
+    // photo count
+    $('wtProgressCount').textContent=photos.length+' photo'+(photos.length===1?'':'s');
   }
-  $('wtLogBtn').addEventListener('click',()=>{
+  function wtSave() {
     const val=parseFloat($('wtInput').value); if(!val||val<=0){alert('Enter a valid weight.');return;}
     const dk=wtDateKey(new Date()); wtData=wtData.filter(r=>r.date!==dk); wtData.push({date:dk,weight:val}); saveWeights(wtData); wtRender();
-    $('wtInput').blur();
-  });
-  $('wtInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('wtLogBtn').click();});
-  $('wtSection').querySelector('.po-card-toggle').addEventListener('click',function(){ const body=$('wtBody'),open=body.style.display!=='none'; body.style.display=open?'none':'block'; this.setAttribute('aria-expanded',open?'false':'true'); this.textContent=open?'▸ Weight Tracker':'▾ Weight Tracker'; });
+  }
+  $('wtSaveBtn').addEventListener('click', wtSave);
+  $('wtInput').addEventListener('keydown',e=>{if(e.key==='Enter') wtSave();});
+  $('wtEditBtn').addEventListener('click',()=>{ const dk=wtDateKey(new Date()); wtData=wtData.filter(r=>r.date!==dk); saveWeights(wtData); wtRender(); });
 
   // ── Progress photos ─────────────────────────────────────────────────────────
   const PHOTOS_KEY='po_coach_photos';
   function loadPhotos() { try { const raw=localStorage.getItem(PHOTOS_KEY); return raw?JSON.parse(raw):[]; } catch(e) { return []; } }
   function savePhotos(arr) { try { localStorage.setItem(PHOTOS_KEY,JSON.stringify(arr)); } catch(e) {} }
   let photos=loadPhotos();
-  let photoViewerIdx=0;
+  let currentViewerPhoto=null;
   function renderPhotos() {
-    const wrap=$('photoGrid'); if(!photos.length){ $('photoEmpty').style.display='block'; wrap.innerHTML=''; return; }
-    $('photoEmpty').style.display='none';
-    wrap.innerHTML=[...photos].sort((a,b)=>b.date.localeCompare(a.date)).map((p,i)=>{
-      const dk=p.date; const dt=new Date(dk+'T12:00:00'); const mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      return '<div class="photo-thumb" data-idx="'+i+'"><img src="'+p.dataUrl+'" alt="Progress photo '+dk+'" loading="lazy"><div class="photo-thumb-label">'+mons[dt.getMonth()]+' '+dt.getDate()+', '+dt.getFullYear()+'</div></div>';
+    const grid=$('wtPhotoGrid'), sorted=[...photos].sort((a,b)=>b.date.localeCompare(a.date));
+    $('wtProgressCount').textContent=sorted.length+' photo'+(sorted.length===1?'':'s');
+    if(!sorted.length){ grid.innerHTML='<div class="wt-photo-empty">No photos yet · tap Take Photo to start</div>'; return; }
+    grid.innerHTML=sorted.map((p,i)=>{
+      const dt=new Date(p.date+'T12:00:00'), mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const lbl=mons[dt.getMonth()]+' '+dt.getDate()+', '+dt.getFullYear();
+      const wt=wtData.find(r=>r.date===p.date);
+      return '<div class="wt-photo-thumb" data-i="'+i+'"><img src="'+p.dataUrl+'" loading="lazy" alt="'+lbl+'"><div class="wt-photo-label">'+lbl+(wt?' · '+wt.weight+state.units:'')+'</div></div>';
     }).join('');
-    wrap.querySelectorAll('.photo-thumb').forEach((el,i)=>{ el.addEventListener('click',()=>openPhotoViewer(i)); });
+    grid.querySelectorAll('.wt-photo-thumb').forEach(el=>{
+      el.addEventListener('click',()=>{ const i=parseInt(el.dataset.i,10); openPhotoViewer(sorted[i]); });
+    });
   }
-  function openPhotoViewer(idx) {
-    photoViewerIdx=idx; const sorted=[...photos].sort((a,b)=>b.date.localeCompare(a.date));
-    const p=sorted[idx]; if(!p) return;
-    $('viewerImg').src=p.dataUrl; $('viewerDate').textContent=p.date;
-    $('viewerOverlay').classList.add('show'); $('viewerPrev').disabled=idx<=0; $('viewerNext').disabled=idx>=sorted.length-1;
+  function openPhotoViewer(p) {
+    currentViewerPhoto=p; $('wtViewerImg').src=p.dataUrl; $('wtViewerDate').textContent=p.date;
+    const wt=wtData.find(r=>r.date===p.date); $('wtViewerWeight').textContent=wt?wt.weight+' '+state.units:'';
+    $('wtViewer').setAttribute('data-mode','single'); $('wtViewer').classList.add('is-open');
   }
-  $('viewerClose').addEventListener('click',()=>$('viewerOverlay').classList.remove('show'));
-  $('viewerPrev').addEventListener('click',()=>{ if(photoViewerIdx>0) openPhotoViewer(photoViewerIdx-1); });
-  $('viewerNext').addEventListener('click',()=>{ const sorted=[...photos].sort((a,b)=>b.date.localeCompare(a.date)); if(photoViewerIdx<sorted.length-1) openPhotoViewer(photoViewerIdx+1); });
-  $('viewerDelete').addEventListener('click',()=>{
-    const sorted=[...photos].sort((a,b)=>b.date.localeCompare(a.date)); const p=sorted[photoViewerIdx]; if(!p) return;
-    if(!confirm('Delete this photo?')) return; photos=photos.filter(x=>x.dataUrl!==p.dataUrl&&x.date!==p.date); savePhotos(photos); $('viewerOverlay').classList.remove('show'); renderPhotos();
+  $('wtProgressLink').addEventListener('click',()=>{ $('wtOverlay').classList.add('is-open'); renderPhotos(); });
+  $('wtBack').addEventListener('click',()=>$('wtOverlay').classList.remove('is-open'));
+  $('wtViewerClose').addEventListener('click',()=>$('wtViewer').classList.remove('is-open'));
+  $('wtViewerDelete').addEventListener('click',()=>{
+    if(!currentViewerPhoto||!confirm('Delete this photo?')) return;
+    photos=photos.filter(p=>!(p.date===currentViewerPhoto.date&&p.dataUrl===currentViewerPhoto.dataUrl));
+    savePhotos(photos); $('wtViewer').classList.remove('is-open'); renderPhotos(); wtRender();
   });
-  $('addPhotoBtn').addEventListener('click',()=>{
-    const src=$('photoSourceSel').value;
-    if(src==='camera') { $('cameraOverlay').classList.add('show'); startCamera(); }
-    else { $('photoFileInput').click(); }
+  $('wtViewerCompare').addEventListener('click',()=>{ $('wtViewer').setAttribute('data-mode','compare'); $('wtCmpImgA').src=currentViewerPhoto.dataUrl; $('wtCmpMetaA').textContent=currentViewerPhoto.date; });
+  $('wtCompareBack').addEventListener('click',()=>$('wtViewer').setAttribute('data-mode','single'));
+  $('wtCompareClose').addEventListener('click',()=>$('wtViewer').classList.remove('is-open'));
+  $('wtCmpSideB').addEventListener('click',()=>{
+    const sorted=[...photos].sort((a,b)=>b.date.localeCompare(a.date)), other=sorted.find(p=>p.dataUrl!==currentViewerPhoto.dataUrl);
+    if(!other) return; $('wtCmpImgB').src=other.dataUrl; $('wtCmpMetaB').textContent=other.date;
+    $('wtCompareHeadline').textContent=currentViewerPhoto.date+' vs '+other.date;
   });
-  $('photoFileInput').addEventListener('change',e=>{
-    const file=e.target.files[0]; if(!file) return;
-    const reader=new FileReader(); reader.onload=re=>{ addPhoto(re.result); e.target.value=''; }; reader.readAsDataURL(file);
-  });
-  function addPhoto(dataUrl) { const dk=wtDateKey(new Date()); photos.push({date:dk,dataUrl}); savePhotos(photos); renderPhotos(); }
-  $('photoSection').querySelector('.po-card-toggle').addEventListener('click',function(){ const body=$('photoBody'),open=body.style.display!=='none'; body.style.display=open?'none':'block'; this.setAttribute('aria-expanded',open?'false':'true'); this.textContent=open?'▸ Progress Photos':'▾ Progress Photos'; });
 
-  let cameraStream=null;
-  function startCamera() {
-    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(stream=>{ cameraStream=stream; $('cameraPreview').srcObject=stream; $('cameraPreview').play().catch(()=>{}); }).catch(e=>{ $('cameraOverlay').classList.remove('show'); alert('Camera not available: '+e.message); });
+  function addPhoto(dataUrl) { const dk=wtDateKey(new Date()); photos.push({date:dk,dataUrl}); savePhotos(photos); renderPhotos(); wtRender(); }
+
+  let cameraStream=null, cameraFacingMode='environment';
+  function startCamera(facing) {
+    cameraFacingMode=facing||'environment';
+    navigator.mediaDevices.getUserMedia({video:{facingMode:cameraFacingMode}}).then(stream=>{
+      cameraStream=stream; $('wtCamVideo').srcObject=stream; $('wtCamVideo').play().catch(()=>{});
+    }).catch(e=>{ $('wtCam').setAttribute('aria-hidden','true'); alert('Camera not available: '+e.message); });
   }
   function stopCamera() { if(cameraStream){ cameraStream.getTracks().forEach(t=>t.stop()); cameraStream=null; } }
-  $('cameraCapture').addEventListener('click',()=>{
-    const video=$('cameraPreview'), canvas=document.createElement('canvas'); canvas.width=video.videoWidth||640; canvas.height=video.videoHeight||480;
-    canvas.getContext('2d').drawImage(video,0,0); addPhoto(canvas.toDataURL('image/jpeg',0.8)); stopCamera(); $('cameraOverlay').classList.remove('show');
+  $('wtTakePhotoBtn').addEventListener('click',()=>{ $('wtCam').classList.add('is-open'); startCamera(); });
+  $('wtFromLibraryBtn').addEventListener('click',()=>$('wtFileLibrary').click());
+  $('wtFileCamera').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ addPhoto(ev.result); e.target.value=''; }; r.readAsDataURL(f); });
+  $('wtFileLibrary').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ addPhoto(ev.result); e.target.value=''; }; r.readAsDataURL(f); });
+  $('wtCamShutter').addEventListener('click',()=>{
+    const v=$('wtCamVideo'), c=$('wtCamCanvas'); c.width=v.videoWidth||640; c.height=v.videoHeight||480;
+    c.getContext('2d').drawImage(v,0,0); addPhoto(c.toDataURL('image/jpeg',0.85)); stopCamera(); $('wtCam').classList.remove('is-open');
   });
-  $('cameraCancel').addEventListener('click',()=>{ stopCamera(); $('cameraOverlay').classList.remove('show'); });
+  $('wtCamCancel').addEventListener('click',()=>{ stopCamera(); $('wtCam').classList.remove('is-open'); });
+  $('wtCamFlip').addEventListener('click',()=>{ stopCamera(); startCamera(cameraFacingMode==='environment'?'user':'environment'); });
 
   // ── Supabase sync ───────────────────────────────────────────────────────────
   (function initSupabaseSync() {
