@@ -1862,6 +1862,60 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   </div>
 </div>
 
+<!-- ===== PASSIVE INCOME ===== -->
+<div class="section" data-section="passive">
+  <div class="section-title">
+    <span class="section-title-text">PASSIVE INCOME</span>
+  </div>
+
+  <!-- Hero totals card -->
+  <div class="card" style="background:linear-gradient(135deg,rgba(110,231,183,0.08),rgba(125,211,252,0.04));border:1px solid rgba(110,231,183,0.18)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:6px">
+      <div>
+        <div style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;font-weight:500">All-time earned</div>
+        <div id="piTotal" style="font-size:34px;font-weight:700;color:#6BE3A4;line-height:1.05;margin-top:2px">$0</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;font-weight:500">This month</div>
+        <div id="piMonthTotal" style="font-size:22px;font-weight:700;color:var(--text-primary);margin-top:2px">$0</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px" id="piAccountTotals"></div>
+  </div>
+
+  <!-- Add entry card -->
+  <div class="card" style="background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.05)">
+    <div style="font-size:10px;letter-spacing:0.18em;font-weight:800;text-transform:uppercase;color:var(--text-tertiary);font-family:var(--font-mono);margin-bottom:10px">+ LOG INCOME</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <label class="date-field" title="Date received"><span class="date-emoji" aria-hidden="true">📅</span><input type="date" id="piDate" /></label>
+      <select id="piAccount" style="padding:9px 12px;background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:var(--text-primary);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;appearance:none;-webkit-appearance:none;outline:none">
+        <option value="Capital One">Capital One</option>
+        <option value="Truist">Truist</option>
+        <option value="Venmo">Venmo</option>
+        <option value="Roth">Roth</option>
+        <option value="US Bank">US Bank</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1.6fr auto;gap:8px;align-items:stretch;padding:4px;background:rgba(0,0,0,0.30);border-radius:12px">
+      <input type="number" id="piAmount" placeholder="Amount" step="0.01" min="0" style="background:transparent;border:none;outline:none;color:var(--text-primary);font-family:var(--font-mono);font-size:14px;font-weight:600;padding:9px 12px;-moz-appearance:textfield;text-align:right" />
+      <input type="text" id="piDesc" placeholder="Source (e.g. Furniture flip, NIL)" style="background:transparent;border:none;outline:none;color:var(--text-primary);font-family:inherit;font-size:14px;padding:9px 12px" />
+      <button id="piAddBtn" style="padding:0 18px;background:linear-gradient(180deg,#6EE7B7,#4ED4A0);color:#04201A;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 4px 14px rgba(110,231,183,0.22)">+ Add</button>
+    </div>
+  </div>
+
+  <!-- Entries list -->
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin:18px 4px 8px">
+    <span style="font-size:10px;letter-spacing:0.18em;font-weight:800;text-transform:uppercase;color:var(--text-tertiary);font-family:var(--font-mono)">ENTRIES</span>
+    <span id="piCount" style="font-size:11px;color:var(--text-tertiary);font-family:var(--font-mono)">0 entries</span>
+  </div>
+  <div id="piList"></div>
+  <div id="piEmpty" style="text-align:center;padding:32px 20px;background:rgba(255,255,255,0.025);border-radius:14px;border:1px dashed rgba(255,255,255,0.08)">
+    <div style="font-size:36px;margin-bottom:8px;opacity:0.6">📈</div>
+    <div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:4px">No income logged yet</div>
+    <div style="font-size:12px;color:var(--text-tertiary);line-height:1.5;max-width:320px;margin:0 auto">Log a furniture flip, NIL deal, dividends — anything that comes in passively.</div>
+  </div>
+</div>
+
 </div>
 
 <!-- ===== BOTTOM TAB BAR ===== -->
@@ -1881,6 +1935,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <button class="bot-tab" data-tab="wish">
     <span class="bot-tab-icon">🎯</span>
     <span class="bot-tab-label">Wishlist</span>
+  </button>
+  <button class="bot-tab" data-tab="passive">
+    <span class="bot-tab-icon">📈</span>
+    <span class="bot-tab-label">Income</span>
   </button>
 </nav>
 
@@ -1931,7 +1989,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
   tabs.forEach(b => b.addEventListener('click', () => setActiveTab(b.dataset.tab)));
   const savedTab = storeGet(TAB_KEY);
-  setActiveTab(savedTab && ['net','subs','incoming','wish'].includes(savedTab) ? savedTab : 'net');
+  setActiveTab(savedTab && ['net','subs','incoming','wish','passive'].includes(savedTab) ? savedTab : 'net');
 
   // ============================================================
   // NET WORTH (copied from the main dashboard, verbatim logic)
@@ -3372,6 +3430,138 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
   safeRenderTicker();
   setInterval(safeRenderTicker, 1500);
+
+  // ============================================================
+  // PASSIVE INCOME
+  // ============================================================
+  const PI_KEY = 'passive_income';
+  const PI_ACCOUNTS = ['Capital One','Truist','Venmo','Roth','US Bank'];
+  const PI_ACCOUNT_COLORS = {
+    'Capital One': '#7DD3FC',
+    'Truist':      '#6EE7B7',
+    'Venmo':       '#B794F4',
+    'Roth':        '#FBBF24',
+    'US Bank':     '#FF8A8A'
+  };
+
+  function fmtUSD(n) {
+    const v = Number(n) || 0;
+    return '$' + v.toLocaleString('en-US', { minimumFractionDigits: v % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 });
+  }
+  function piMonthKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+  function fmtPiDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso + 'T00:00');
+    if (isNaN(d)) return iso;
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function renderPassiveIncome() {
+    const entries = (storeGet(PI_KEY) || []).slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    const list = document.getElementById('piList');
+    const empty = document.getElementById('piEmpty');
+    const totalEl = document.getElementById('piTotal');
+    const monthEl = document.getElementById('piMonthTotal');
+    const countEl = document.getElementById('piCount');
+    const acctEl  = document.getElementById('piAccountTotals');
+    if (!list) return;
+
+    const allTotal = entries.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+    const curMonth = piMonthKey();
+    const monthTotal = entries.filter(e => (e.date || '').slice(0, 7) === curMonth)
+                              .reduce((s, e) => s + (Number(e.amount) || 0), 0);
+    if (totalEl) totalEl.textContent = fmtUSD(allTotal);
+    if (monthEl) monthEl.textContent = fmtUSD(monthTotal);
+    if (countEl) countEl.textContent = entries.length + (entries.length === 1 ? ' entry' : ' entries');
+
+    // Per-account totals pills
+    if (acctEl) {
+      const byAcct = {};
+      entries.forEach(e => { byAcct[e.account] = (byAcct[e.account] || 0) + (Number(e.amount) || 0); });
+      acctEl.innerHTML = Object.entries(byAcct).filter(([,v]) => v > 0).map(([name, val]) => {
+        const color = PI_ACCOUNT_COLORS[name] || '#FFFFFF';
+        return '<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:999px;font-size:11px;font-family:var(--font-mono);font-weight:700;color:' + color + '">'
+          + '<span style="width:6px;height:6px;border-radius:50%;background:' + color + ';box-shadow:0 0 6px ' + color + '"></span>'
+          + escapeHtml(name) + ' · ' + fmtUSD(val)
+          + '</span>';
+      }).join('');
+    }
+
+    if (!entries.length) {
+      list.innerHTML = '';
+      if (empty) empty.style.display = '';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+
+    list.innerHTML = entries.map((e, i) => {
+      const color = PI_ACCOUNT_COLORS[e.account] || '#6EE7B7';
+      return '<div style="display:grid;grid-template-columns:4px 1fr auto auto;gap:12px;align-items:center;padding:13px 16px;background:rgba(255,255,255,0.025);border-radius:12px;margin-bottom:8px;transition:background 0.15s" onmouseover="this.style.background=\'rgba(255,255,255,0.045)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.025)\'">'
+        + '<span style="width:4px;height:32px;border-radius:2px;background:' + color + ';box-shadow:0 0 8px ' + color + ';flex-shrink:0"></span>'
+        + '<div style="min-width:0">'
+        +   '<div style="font-size:14px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(e.desc || '(no description)') + '</div>'
+        +   '<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;font-family:var(--font-mono);display:flex;gap:8px;flex-wrap:wrap">'
+        +     '<span style="color:' + color + ';font-weight:700">' + escapeHtml(e.account) + '</span>'
+        +     '<span>· ' + fmtPiDate(e.date) + '</span>'
+        +   '</div>'
+        + '</div>'
+        + '<div style="font-size:18px;font-weight:700;color:#6BE3A4;font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap">' + fmtUSD(e.amount) + '</div>'
+        + '<button data-pi-del="' + i + '" style="background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--text-tertiary);cursor:pointer;font-size:14px;padding:5px 9px;border-radius:6px;font-family:inherit;line-height:1" title="Delete">×</button>'
+        + '</div>';
+    }).join('');
+
+    list.querySelectorAll('[data-pi-del]').forEach(b => {
+      b.addEventListener('click', () => {
+        const sorted = (storeGet(PI_KEY) || []).slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        const entry = sorted[parseInt(b.dataset.piDel, 10)];
+        if (!entry || !confirm('Delete "' + (entry.desc || 'this entry') + '"?')) return;
+        const all = storeGet(PI_KEY) || [];
+        const idx = all.findIndex(x => x.id === entry.id);
+        if (idx >= 0) { all.splice(idx, 1); storeSet(PI_KEY, all); }
+        renderPassiveIncome();
+      });
+    });
+  }
+
+  function doPiAdd() {
+    const dateEl   = document.getElementById('piDate');
+    const acctEl   = document.getElementById('piAccount');
+    const amtEl    = document.getElementById('piAmount');
+    const descEl   = document.getElementById('piDesc');
+    const date     = dateEl && dateEl.value;
+    const account  = acctEl && acctEl.value;
+    const amount   = parseFloat(amtEl && amtEl.value);
+    const desc     = (descEl && descEl.value.trim()) || '';
+    if (!date || !account || isNaN(amount) || amount <= 0) {
+      if (!date && dateEl) dateEl.focus();
+      else if (isNaN(amount) || amount <= 0) amtEl && amtEl.focus();
+      return;
+    }
+    const entries = storeGet(PI_KEY) || [];
+    entries.push({ id: 'pi_' + Date.now(), date, account, amount, desc });
+    storeSet(PI_KEY, entries);
+    if (amtEl) amtEl.value = '';
+    if (descEl) descEl.value = '';
+    renderPassiveIncome();
+  }
+
+  // Set default date to today
+  (function() {
+    const d = new Date();
+    const iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    const el = document.getElementById('piDate');
+    if (el) el.value = iso;
+  })();
+
+  document.getElementById('piAddBtn').addEventListener('click', doPiAdd);
+  ['piAmount','piDesc'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') doPiAdd(); });
+  });
+  renderPassiveIncome();
 
 })();
 </script>
