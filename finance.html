@@ -2014,11 +2014,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
           <option value="US Bank">US Bank</option>
         </select>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1.6fr auto;gap:8px;align-items:stretch;padding:4px;background:rgba(0,0,0,0.30);border-radius:12px">
+      <div style="display:grid;grid-template-columns:1fr 1.6fr auto;gap:8px;align-items:stretch;padding:4px;background:rgba(0,0,0,0.30);border-radius:12px;margin-bottom:8px">
         <input type="number" id="piAmount" placeholder="Amount" step="0.01" min="0" class="pi-num-input" style="text-align:right" />
         <input type="text" id="piDesc" placeholder="Source (e.g. Furniture flip)" class="pi-text-input" />
         <button id="piAddBtn" class="pi-green-btn">+ Add</button>
       </div>
+      <label class="sub-auto-toggle" id="piAutoDepositToggle" title="Toggle whether this income auto-deposits or needs to be manually received">
+        <input type="checkbox" id="piAutoDeposit" />
+        <span class="sub-auto-track"><span class="sub-auto-thumb"></span></span>
+        <span class="sub-auto-label">Auto Deposit</span>
+      </label>
     </div>
 
     <!-- RECURRING form -->
@@ -2056,6 +2061,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       <!-- Month checkboxes -->
       <div class="pi-field-label" style="margin-bottom:8px">Applies to these months</div>
       <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:14px" id="piMonthChecks"></div>
+      <label class="sub-auto-toggle" style="margin-bottom:12px" title="Toggle whether this income auto-deposits or needs to be manually received">
+        <input type="checkbox" id="piRecAutoDeposit" />
+        <span class="sub-auto-track"><span class="sub-auto-thumb"></span></span>
+        <span class="sub-auto-label">Auto Deposit</span>
+      </label>
       <button id="piRecAddBtn" class="pi-green-btn" style="width:100%;padding:13px">+ Add Recurring Stream</button>
     </div>
   </div>
@@ -3835,6 +3845,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     rowEl.appendChild(editor);
   }
 
+  function piAutoToggleHtml(isOn, dataAttr) {
+    return '<button class="sub-row-toggle' + (isOn ? ' is-on' : '') + '" ' + dataAttr + ' type="button" title="' + (isOn ? 'Auto Deposit ON — money lands automatically' : 'Manual — needs to be received/tracked') + '">'
+      + '<span class="sub-row-toggle-dot"></span>'
+      + (isOn ? 'Auto Deposit' : 'Manual')
+      + '</button>';
+  }
+
   function renderPiRecList() {
     const list = document.getElementById('piRecList');
     const empty = document.getElementById('piRecEmpty');
@@ -3856,12 +3873,25 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         +    '<span>· day '+r.dayOfMonth+' of month</span>'
         +    '<span>· '+r.year+'</span>'
         +  '</div>'
-        +  '<div style="font-size:10px;color:var(--text-tertiary);margin-top:3px">'+escapeHtml(mNames)+'</div>'
+        +  '<div style="display:flex;align-items:center;gap:8px;margin-top:6px">'
+        +    piAutoToggleHtml(!!r.autoDeposit, 'data-pi-rec-toggle="'+i+'"')
+        +  '</div>'
+        +  '<div style="font-size:10px;color:var(--text-tertiary);margin-top:4px">'+escapeHtml(mNames)+'</div>'
         +'</div>'
         +'<div style="font-size:18px;font-weight:700;color:#6BE3A4;font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap">'+fmtUSD(r.amount)+'<span style="font-size:10px;color:var(--text-tertiary);font-weight:500">/mo</span></div>'
         +'<button data-pi-rec-del="'+i+'" style="background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--text-tertiary);cursor:pointer;font-size:14px;padding:5px 9px;border-radius:6px;font-family:inherit;line-height:1" title="Delete">×</button>'
         +'</div>';
     }).join('');
+    list.querySelectorAll('[data-pi-rec-toggle]').forEach(b => {
+      b.addEventListener('click', () => {
+        const i = parseInt(b.dataset.piRecToggle, 10);
+        const arr = storeGet(PI_REC_KEY) || [];
+        if (!arr[i]) return;
+        arr[i].autoDeposit = !arr[i].autoDeposit;
+        storeSet(PI_REC_KEY, arr);
+        renderPiRecList();
+      });
+    });
     list.querySelectorAll('[data-pi-rec-del]').forEach(b => {
       b.addEventListener('click', () => {
         const i = parseInt(b.dataset.piRecDel, 10);
@@ -3892,11 +3922,23 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         +    '<span style="color:'+color+';font-weight:700">'+escapeHtml(e.account)+'</span>'
         +    '<span>· '+fmtPiDate(e.date)+'</span>'
         +  '</div>'
+        +  '<div style="margin-top:6px">'+piAutoToggleHtml(!!e.autoDeposit, 'data-pi-toggle="'+e.id+'"')+'</div>'
         +'</div>'
         +'<div style="font-size:18px;font-weight:700;color:#6BE3A4;font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap">'+fmtUSD(e.amount)+'</div>'
         +'<button data-pi-del="'+e.id+'" style="background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--text-tertiary);cursor:pointer;font-size:14px;padding:5px 9px;border-radius:6px;font-family:inherit;line-height:1" title="Delete">×</button>'
         +'</div>';
     }).join('');
+    list.querySelectorAll('[data-pi-toggle]').forEach(b => {
+      b.addEventListener('click', () => {
+        const id = b.dataset.piToggle;
+        const all = storeGet(PI_KEY) || [];
+        const idx = all.findIndex(x => x.id === id);
+        if (idx < 0) return;
+        all[idx].autoDeposit = !all[idx].autoDeposit;
+        storeSet(PI_KEY, all);
+        renderPiOneTimeList();
+      });
+    });
     list.querySelectorAll('[data-pi-del]').forEach(b => {
       b.addEventListener('click', () => {
         const id = b.dataset.piDel;
@@ -3946,11 +3988,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   function doPiAdd() {
     const dateEl = document.getElementById('piDate'), acctEl = document.getElementById('piAccount');
     const amtEl  = document.getElementById('piAmount'), descEl = document.getElementById('piDesc');
+    const autoEl = document.getElementById('piAutoDeposit');
     const date = dateEl && dateEl.value, account = acctEl && acctEl.value;
     const amount = parseFloat(amtEl && amtEl.value), desc = (descEl && descEl.value.trim()) || '';
+    const autoDeposit = !!(autoEl && autoEl.checked);
     if (!date || !account || isNaN(amount) || amount <= 0) { (!date && dateEl ? dateEl : amtEl) && (!date && dateEl ? dateEl : amtEl).focus(); return; }
     const entries = storeGet(PI_KEY) || [];
-    entries.push({ id: 'pi_' + Date.now(), date, account, amount, desc });
+    entries.push({ id: 'pi_' + Date.now(), date, account, amount, desc, autoDeposit });
     storeSet(PI_KEY, entries);
     if (amtEl) amtEl.value = '';
     if (descEl) descEl.value = '';
@@ -3959,21 +4003,23 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
   // Recurring add
   function doPiRecAdd() {
-    const amount  = parseFloat(document.getElementById('piRecAmount').value);
-    const day     = parseInt(document.getElementById('piRecDay').value, 10);
-    const year    = parseInt(document.getElementById('piRecYear').value, 10) || new Date().getFullYear();
-    const desc    = document.getElementById('piRecDesc').value.trim();
-    const account = document.getElementById('piRecAccount').value;
-    const months  = [...document.querySelectorAll('#piMonthChecks input:checked')].map(c => parseInt(c.value, 10));
+    const amount      = parseFloat(document.getElementById('piRecAmount').value);
+    const day         = parseInt(document.getElementById('piRecDay').value, 10);
+    const year        = parseInt(document.getElementById('piRecYear').value, 10) || new Date().getFullYear();
+    const desc        = document.getElementById('piRecDesc').value.trim();
+    const account     = document.getElementById('piRecAccount').value;
+    const autoDeposit = !!(document.getElementById('piRecAutoDeposit') && document.getElementById('piRecAutoDeposit').checked);
+    const months      = [...document.querySelectorAll('#piMonthChecks input:checked')].map(c => parseInt(c.value, 10));
     if (isNaN(amount) || amount <= 0) { document.getElementById('piRecAmount').focus(); return; }
     if (isNaN(day) || day < 1 || day > 31) { document.getElementById('piRecDay').focus(); return; }
     if (!months.length) { alert('Select at least one month.'); return; }
     const recs = storeGet(PI_REC_KEY) || [];
-    recs.push({ id: 'rec_' + Date.now(), amount, dayOfMonth: day, year, desc, account, months, overrides: {} });
+    recs.push({ id: 'rec_' + Date.now(), amount, dayOfMonth: day, year, desc, account, months, autoDeposit, overrides: {} });
     storeSet(PI_REC_KEY, recs);
     document.getElementById('piRecAmount').value = '';
     document.getElementById('piRecDay').value = '';
     document.getElementById('piRecDesc').value = '';
+    document.getElementById('piRecAutoDeposit').checked = false;
     document.querySelectorAll('#piMonthChecks input:checked').forEach(c => { c.checked = false; c.closest('label').classList.remove('checked'); });
     renderPassiveIncome();
   }
