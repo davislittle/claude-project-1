@@ -1310,15 +1310,15 @@ img, video, canvas, svg { max-width: 100%; }
     try { db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) { return; }
     async function pull() {
       try {
-        const { data } = await db.from('app_state').select('key,data').in('key', PC_SYNCED_KEYS);
+        const { data } = await db.from('app_state').select('id,value').in('id', PC_SYNCED_KEYS);
         if (!data || !data.length) return;
-        data.forEach(row => { try { localStorage.setItem(row.key, typeof row.data === 'string' ? row.data : JSON.stringify(row.data)); } catch(e) {} });
+        data.forEach(row => { try { localStorage.setItem(row.id, row.value); } catch(e) {} });
         state = loadState(); wtData = loadWeights(); photos = loadPhotos(); doneDays = loadDoneDays();
         renderAll(); wtRender(); renderPhotos();
       } catch(e) {}
     }
     function push(key, val) {
-      try { db.from('app_state').upsert({ key, data: val, updated_at: new Date().toISOString() }, { onConflict: 'key' }); } catch(e) {}
+      try { db.from('app_state').upsert({ id: key, value: val }, { onConflict: 'id' }); } catch(e) {}
     }
     const _saveState = saveState;
     saveState = function() { _saveState(); push(LS_KEY, localStorage.getItem(LS_KEY)); };

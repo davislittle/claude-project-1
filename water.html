@@ -363,7 +363,7 @@ html, body {
   }
   function saveState() {
     try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {}
-    try { _db.from('app_state').upsert({key: LS_KEY, data: state, updated_at: new Date().toISOString()}, {onConflict:'key'}); } catch(e) {}
+    try { _db.from('app_state').upsert({id: LS_KEY, value: JSON.stringify(state)}, {onConflict:'id'}); } catch(e) {}
   }
   let state = loadState();
   $('appTitle').textContent = CONFIG.appTitle || 'Water Coach';
@@ -540,11 +540,10 @@ html, body {
   // Pull water data from Supabase; re-render if newer data came in.
   (async () => {
     try {
-      const { data } = await _db.from('app_state').select('key, data').eq('key', LS_KEY).maybeSingle();
-      if (!data || data.data == null) return;
-      const serialized = JSON.stringify(data.data);
-      if (localStorage.getItem(LS_KEY) !== serialized) {
-        localStorage.setItem(LS_KEY, serialized);
+      const { data } = await _db.from('app_state').select('id, value').eq('id', LS_KEY).maybeSingle();
+      if (!data || data.value == null) return;
+      if (localStorage.getItem(LS_KEY) !== data.value) {
+        localStorage.setItem(LS_KEY, data.value);
         state = loadState();
         renderDayPill(); renderWater();
       }

@@ -2185,7 +2185,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     const payload = _buildPayload(sbKey);
     if (payload == null) return;
     _db.from('app_state')
-      .upsert({ key: sbKey, data: payload, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+      .upsert({ id: sbKey, value: JSON.stringify(payload) }, { onConflict: 'id' })
       .then(({ error }) => {
         if (error) console.error('[Finance sync] write failed — key:', sbKey, '| error:', error.message,
           '\n(If this is an RLS/permission error, disable Row-Level Security on the app_state table in your Supabase dashboard.)');
@@ -4139,7 +4139,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     ];
 
     // 1. Pull: merge Supabase → localStorage; re-render if anything changed.
-    _db.from('app_state').select('key, data').in('key', _SB_FINANCE_KEYS)
+    _db.from('app_state').select('id, value').in('id', _SB_FINANCE_KEYS)
       .then(({ data: rows, error }) => {
         if (error) {
           console.error('[Finance sync] pull failed:', error.message,
@@ -4149,23 +4149,26 @@ input[type="date"]::-webkit-calendar-picker-indicator {
           return;
         }
         if (!rows || !rows.length) {
-          // Table is empty on this key set — push local data to seed Supabase.
+          // Table is empty — push local data to seed Supabase.
           console.log('[Finance sync] No remote data found — pushing local data to Supabase now.');
           _SB_FINANCE_KEYS.forEach(k => sbPush(k));
           return;
         }
         // Apply Supabase data into localStorage.
         let changed = false;
-        rows.forEach(row => { if (_applyRow(row.key, row.data)) changed = true; });
+        rows.forEach(row => {
+          try {
+            const parsed = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
+            if (_applyRow(row.id, parsed)) changed = true;
+          } catch(e) { console.warn('[Finance sync] Could not parse row:', row.id, e); }
+        });
         if (changed) {
           renderAllNetWorth();
           if (typeof renderSubs          === 'function') renderSubs();
           if (typeof renderPassiveIncome === 'function') renderPassiveIncome();
           console.log('[Finance sync] Loaded remote data from Supabase.');
         } else {
-          console.log('[Finance sync] Local data matches Supabase — already in sync.');
-          // Local data exists but hasn't been pushed yet (e.g. first run after adding sync).
-          // Push it up so Supabase is populated.
+          console.log('[Finance sync] Local data matches Supabase — pushing local data up.');
           _SB_FINANCE_KEYS.forEach(k => sbPush(k));
         }
       });

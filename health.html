@@ -306,7 +306,7 @@ main {
   const storeSet = (k, v) => {
     localStorage.setItem(k, JSON.stringify(v));
     if (k.startsWith('stack:')) {
-      try { _db.from('app_state').upsert({key: k, data: v, updated_at: new Date().toISOString()}, {onConflict:'key'}); } catch(e) {}
+      try { _db.from('app_state').upsert({id: k, value: JSON.stringify(v)}, {onConflict:'id'}); } catch(e) {}
     }
   };
 
@@ -558,14 +558,13 @@ main {
   // Pull all stack data from Supabase on load; re-render if anything changed.
   (async () => {
     try {
-      const { data } = await _db.from('app_state').select('key, data').like('key', 'stack:%');
+      const { data } = await _db.from('app_state').select('id, value').like('id', 'stack:%');
       if (!data || !data.length) return;
       let changed = false;
       data.forEach(row => {
-        if (row.data == null) return;
-        const serialized = JSON.stringify(row.data);
-        if (localStorage.getItem(row.key) !== serialized) {
-          localStorage.setItem(row.key, serialized);
+        if (row.value == null) return;
+        if (localStorage.getItem(row.id) !== row.value) {
+          localStorage.setItem(row.id, row.value);
           changed = true;
         }
       });
