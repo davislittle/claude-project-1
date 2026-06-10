@@ -1548,6 +1548,20 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   box-shadow: 0 0 6px rgba(107,227,164,0.7);
 }
 
+.pi-period-btn {
+  padding: 6px 14px; border: none; background: transparent;
+  color: rgba(255,255,255,0.45); border-radius: 7px;
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, color 0.15s; white-space: nowrap;
+}
+.pi-period-btn:hover { color: rgba(255,255,255,0.7); }
+.pi-period-active {
+  background: linear-gradient(180deg, #ffffff 0%, #e8e5dd 100%) !important;
+  color: #0a0a0b !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 2px 8px rgba(0,0,0,0.35);
+}
+
 .sub-from-pill {
   display: inline-flex;
   align-items: center;
@@ -1870,13 +1884,19 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
   <!-- Hero totals card -->
   <div class="card" style="background:linear-gradient(135deg,rgba(110,231,183,0.08),rgba(125,211,252,0.04));border:1px solid rgba(110,231,183,0.18)">
+    <!-- Period selector -->
+    <div style="display:flex;gap:4px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:3px;margin-bottom:16px;width:fit-content">
+      <button id="piPeriodAll"     class="pi-period-btn pi-period-active" data-period="all">All time</button>
+      <button id="piPeriodYear"    class="pi-period-btn" data-period="year">This year</button>
+      <button id="piPeriodMonth"   class="pi-period-btn" data-period="month">This month</button>
+    </div>
     <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:6px">
       <div>
-        <div style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;font-weight:500">All-time earned</div>
+        <div id="piTotalLabel" style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;font-weight:500">All-time earned</div>
         <div id="piTotal" style="font-size:34px;font-weight:700;color:#6BE3A4;line-height:1.05;margin-top:2px">$0</div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;font-weight:500">This month</div>
+        <div id="piSecondLabel" style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;font-weight:500">This month</div>
         <div id="piMonthTotal" style="font-size:22px;font-weight:700;color:var(--text-primary);margin-top:2px">$0</div>
       </div>
     </div>
@@ -1905,7 +1925,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
   <!-- Entries list -->
   <div style="display:flex;justify-content:space-between;align-items:baseline;margin:18px 4px 8px">
-    <span style="font-size:10px;letter-spacing:0.18em;font-weight:800;text-transform:uppercase;color:var(--text-tertiary);font-family:var(--font-mono)">ENTRIES</span>
+    <span id="piEntriesLabel" style="font-size:10px;letter-spacing:0.18em;font-weight:800;text-transform:uppercase;color:var(--text-tertiary);font-family:var(--font-mono)">ALL ENTRIES</span>
     <span id="piCount" style="font-size:11px;color:var(--text-tertiary);font-family:var(--font-mono)">0 entries</span>
   </div>
   <div id="piList"></div>
@@ -3435,7 +3455,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   // PASSIVE INCOME
   // ============================================================
   const PI_KEY = 'passive_income';
-  const PI_ACCOUNTS = ['Capital One','Truist','Venmo','Roth','US Bank'];
   const PI_ACCOUNT_COLORS = {
     'Capital One': '#7DD3FC',
     'Truist':      '#6EE7B7',
@@ -3443,50 +3462,79 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     'Roth':        '#FBBF24',
     'US Bank':     '#FF8A8A'
   };
+  let piPeriod = 'all'; // 'all' | 'year' | 'month'
 
   function fmtUSD(n) {
     const v = Number(n) || 0;
     return '$' + v.toLocaleString('en-US', { minimumFractionDigits: v % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 });
   }
-  function piMonthKey() {
-    const d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-  }
+  function piYearKey()  { return String(new Date().getFullYear()); }
+  function piMonthKey() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
   function fmtPiDate(iso) {
     if (!iso) return '';
     const d = new Date(iso + 'T00:00');
     if (isNaN(d)) return iso;
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
   }
+  function piFilterEntries(all) {
+    if (piPeriod === 'month') return all.filter(e => (e.date || '').slice(0,7) === piMonthKey());
+    if (piPeriod === 'year')  return all.filter(e => (e.date || '').slice(0,4) === piYearKey());
+    return all;
+  }
+  function piPeriodLabel() {
+    if (piPeriod === 'month') return { main: 'This month', second: 'This year' };
+    if (piPeriod === 'year')  return { main: 'This year',  second: 'All time'  };
+    return                           { main: 'All-time earned', second: 'This month' };
+  }
+  function piSecondTotal(all) {
+    if (piPeriod === 'month') return all.filter(e => (e.date||'').slice(0,4) === piYearKey()).reduce((s,e) => s+(Number(e.amount)||0),0);
+    if (piPeriod === 'year')  return all.reduce((s,e) => s+(Number(e.amount)||0),0);
+    return all.filter(e => (e.date||'').slice(0,7) === piMonthKey()).reduce((s,e) => s+(Number(e.amount)||0),0);
+  }
 
   function renderPassiveIncome() {
-    const entries = (storeGet(PI_KEY) || []).slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    const allEntries = (storeGet(PI_KEY) || []).slice().sort((a,b) => (b.date||'').localeCompare(a.date||''));
+    const entries    = piFilterEntries(allEntries);
     const list = document.getElementById('piList');
     const empty = document.getElementById('piEmpty');
-    const totalEl = document.getElementById('piTotal');
-    const monthEl = document.getElementById('piMonthTotal');
-    const countEl = document.getElementById('piCount');
-    const acctEl  = document.getElementById('piAccountTotals');
+    const totalEl  = document.getElementById('piTotal');
+    const monthEl  = document.getElementById('piMonthTotal');
+    const countEl  = document.getElementById('piCount');
+    const acctEl   = document.getElementById('piAccountTotals');
+    const lblMain  = document.getElementById('piTotalLabel');
+    const lblSec   = document.getElementById('piSecondLabel');
+    const lblEntries = document.getElementById('piEntriesLabel');
     if (!list) return;
 
-    const allTotal = entries.reduce((s, e) => s + (Number(e.amount) || 0), 0);
-    const curMonth = piMonthKey();
-    const monthTotal = entries.filter(e => (e.date || '').slice(0, 7) === curMonth)
-                              .reduce((s, e) => s + (Number(e.amount) || 0), 0);
-    if (totalEl) totalEl.textContent = fmtUSD(allTotal);
-    if (monthEl) monthEl.textContent = fmtUSD(monthTotal);
+    // Period button active state
+    ['piPeriodAll','piPeriodYear','piPeriodMonth'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) btn.classList.toggle('pi-period-active', btn.dataset.period === piPeriod);
+    });
+
+    const labels = piPeriodLabel();
+    if (lblMain) lblMain.textContent = labels.main;
+    if (lblSec)  lblSec.textContent  = labels.second;
+    if (lblEntries) {
+      const map = { all: 'ALL ENTRIES', year: 'THIS YEAR', month: 'THIS MONTH' };
+      lblEntries.textContent = map[piPeriod] || 'ENTRIES';
+    }
+
+    const periodTotal  = entries.reduce((s,e) => s+(Number(e.amount)||0), 0);
+    const secondTotal  = piSecondTotal(allEntries);
+    if (totalEl) totalEl.textContent = fmtUSD(periodTotal);
+    if (monthEl) monthEl.textContent = fmtUSD(secondTotal);
     if (countEl) countEl.textContent = entries.length + (entries.length === 1 ? ' entry' : ' entries');
 
-    // Per-account totals pills
+    // Per-account pills (scoped to current filter)
     if (acctEl) {
       const byAcct = {};
-      entries.forEach(e => { byAcct[e.account] = (byAcct[e.account] || 0) + (Number(e.amount) || 0); });
-      acctEl.innerHTML = Object.entries(byAcct).filter(([,v]) => v > 0).map(([name, val]) => {
+      entries.forEach(e => { byAcct[e.account] = (byAcct[e.account]||0)+(Number(e.amount)||0); });
+      acctEl.innerHTML = Object.entries(byAcct).filter(([,v]) => v > 0).map(([name,val]) => {
         const color = PI_ACCOUNT_COLORS[name] || '#FFFFFF';
-        return '<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:999px;font-size:11px;font-family:var(--font-mono);font-weight:700;color:' + color + '">'
-          + '<span style="width:6px;height:6px;border-radius:50%;background:' + color + ';box-shadow:0 0 6px ' + color + '"></span>'
-          + escapeHtml(name) + ' · ' + fmtUSD(val)
-          + '</span>';
+        return '<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:999px;font-size:11px;font-family:var(--font-mono);font-weight:700;color:'+color+'">'
+          + '<span style="width:6px;height:6px;border-radius:50%;background:'+color+';box-shadow:0 0 6px '+color+'"></span>'
+          + escapeHtml(name)+' · '+fmtUSD(val)+'</span>';
       }).join('');
     }
 
@@ -3500,44 +3548,50 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     list.innerHTML = entries.map((e, i) => {
       const color = PI_ACCOUNT_COLORS[e.account] || '#6EE7B7';
       return '<div style="display:grid;grid-template-columns:4px 1fr auto auto;gap:12px;align-items:center;padding:13px 16px;background:rgba(255,255,255,0.025);border-radius:12px;margin-bottom:8px;transition:background 0.15s" onmouseover="this.style.background=\'rgba(255,255,255,0.045)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.025)\'">'
-        + '<span style="width:4px;height:32px;border-radius:2px;background:' + color + ';box-shadow:0 0 8px ' + color + ';flex-shrink:0"></span>'
+        + '<span style="width:4px;height:32px;border-radius:2px;background:'+color+';box-shadow:0 0 8px '+color+';flex-shrink:0"></span>'
         + '<div style="min-width:0">'
-        +   '<div style="font-size:14px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(e.desc || '(no description)') + '</div>'
+        +   '<div style="font-size:14px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(e.desc||'(no description)')+'</div>'
         +   '<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;font-family:var(--font-mono);display:flex;gap:8px;flex-wrap:wrap">'
-        +     '<span style="color:' + color + ';font-weight:700">' + escapeHtml(e.account) + '</span>'
-        +     '<span>· ' + fmtPiDate(e.date) + '</span>'
+        +     '<span style="color:'+color+';font-weight:700">'+escapeHtml(e.account)+'</span>'
+        +     '<span>· '+fmtPiDate(e.date)+'</span>'
         +   '</div>'
         + '</div>'
-        + '<div style="font-size:18px;font-weight:700;color:#6BE3A4;font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap">' + fmtUSD(e.amount) + '</div>'
-        + '<button data-pi-del="' + i + '" style="background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--text-tertiary);cursor:pointer;font-size:14px;padding:5px 9px;border-radius:6px;font-family:inherit;line-height:1" title="Delete">×</button>'
+        + '<div style="font-size:18px;font-weight:700;color:#6BE3A4;font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap">'+fmtUSD(e.amount)+'</div>'
+        + '<button data-pi-del="'+e.id+'" style="background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--text-tertiary);cursor:pointer;font-size:14px;padding:5px 9px;border-radius:6px;font-family:inherit;line-height:1" title="Delete">×</button>'
         + '</div>';
     }).join('');
 
     list.querySelectorAll('[data-pi-del]').forEach(b => {
       b.addEventListener('click', () => {
-        const sorted = (storeGet(PI_KEY) || []).slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-        const entry = sorted[parseInt(b.dataset.piDel, 10)];
-        if (!entry || !confirm('Delete "' + (entry.desc || 'this entry') + '"?')) return;
+        const id = b.dataset.piDel;
         const all = storeGet(PI_KEY) || [];
-        const idx = all.findIndex(x => x.id === entry.id);
+        const entry = all.find(x => x.id === id);
+        if (!entry || !confirm('Delete "' + (entry.desc || 'this entry') + '"?')) return;
+        const idx = all.indexOf(entry);
         if (idx >= 0) { all.splice(idx, 1); storeSet(PI_KEY, all); }
         renderPassiveIncome();
       });
     });
   }
 
+  // Period button clicks
+  ['piPeriodAll','piPeriodYear','piPeriodMonth'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.addEventListener('click', () => { piPeriod = btn.dataset.period; renderPassiveIncome(); });
+  });
+
   function doPiAdd() {
-    const dateEl   = document.getElementById('piDate');
-    const acctEl   = document.getElementById('piAccount');
-    const amtEl    = document.getElementById('piAmount');
-    const descEl   = document.getElementById('piDesc');
-    const date     = dateEl && dateEl.value;
-    const account  = acctEl && acctEl.value;
-    const amount   = parseFloat(amtEl && amtEl.value);
-    const desc     = (descEl && descEl.value.trim()) || '';
+    const dateEl  = document.getElementById('piDate');
+    const acctEl  = document.getElementById('piAccount');
+    const amtEl   = document.getElementById('piAmount');
+    const descEl  = document.getElementById('piDesc');
+    const date    = dateEl && dateEl.value;
+    const account = acctEl && acctEl.value;
+    const amount  = parseFloat(amtEl && amtEl.value);
+    const desc    = (descEl && descEl.value.trim()) || '';
     if (!date || !account || isNaN(amount) || amount <= 0) {
       if (!date && dateEl) dateEl.focus();
-      else if (isNaN(amount) || amount <= 0) amtEl && amtEl.focus();
+      else amtEl && amtEl.focus();
       return;
     }
     const entries = storeGet(PI_KEY) || [];
@@ -3548,7 +3602,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     renderPassiveIncome();
   }
 
-  // Set default date to today
+  // Default date to today
   (function() {
     const d = new Date();
     const iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
