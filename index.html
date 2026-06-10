@@ -551,6 +551,113 @@
       font-variant-numeric: tabular-nums; color: var(--text-tertiary); letter-spacing: 0.04em;
     }
 
+  /* ── Long Term Goals ────────────────────────────────────────── */
+  .ltg-filter-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .ltg-filter-tab {
+    padding: 6px 14px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.04); color: var(--text-tertiary);
+    font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .ltg-filter-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.07); }
+  .ltg-filter-tab.ltg-filter-active { background: rgba(139,92,246,0.18); color: #C4B5FD; border-color: rgba(139,92,246,0.40); }
+
+  .ltg-goal-row {
+    padding: 14px 16px; border-radius: 14px; margin-bottom: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+    transition: background 0.18s, transform 0.18s;
+  }
+  .ltg-goal-row:hover { background: rgba(255,255,255,0.055); transform: translateY(-1px); }
+  .ltg-goal-row:hover .ltg-delete-btn { opacity: 1; }
+  .ltg-goal-row.is-done { opacity: 0.6; }
+
+  .ltg-goal-header { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }
+  .ltg-badge {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 100px; flex-shrink: 0;
+  }
+  .ltg-badge-finance { background: rgba(251,191,36,0.15); color: #FBBF24; }
+  .ltg-badge-gym     { background: rgba(107,227,164,0.15); color: #6BE3A4; }
+  .ltg-badge-general { background: rgba(139,92,246,0.15); color: #C4B5FD; }
+
+  .ltg-goal-name { font-size: 14px; font-weight: 600; color: var(--text-primary); flex: 1; min-width: 0; word-break: break-word; }
+  .ltg-delete-btn {
+    font-size: 16px; background: none; border: none; cursor: pointer;
+    color: var(--text-tertiary); padding: 4px; border-radius: 4px;
+    opacity: 0; transition: opacity 0.2s, color 0.2s; flex-shrink: 0;
+  }
+  .ltg-delete-btn:hover { color: var(--danger); }
+
+  .ltg-values-row {
+    display: flex; align-items: baseline; gap: 6px; margin-bottom: 9px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums; flex-wrap: wrap;
+  }
+  .ltg-current-val { font-size: 26px; font-weight: 700; color: var(--text-primary); line-height: 1; }
+  .ltg-val-sep     { font-size: 13px; color: var(--text-tertiary); }
+  .ltg-target-val  { font-size: 14px; color: var(--text-tertiary); }
+  .ltg-sub-label   { font-size: 11px; color: var(--text-tertiary); }
+
+  .ltg-bar-track { height: 5px; border-radius: 3px; background: rgba(255,255,255,0.08); margin-bottom: 7px; overflow: hidden; }
+  .ltg-bar-fill  { height: 100%; border-radius: 3px; transition: width 0.65s cubic-bezier(0.22,1,0.36,1); }
+  .ltg-bar-finance .ltg-bar-fill { background: linear-gradient(90deg,#F59E0B,#FBBF24); box-shadow: 0 0 6px rgba(251,191,36,0.4); }
+  .ltg-bar-gym     .ltg-bar-fill { background: linear-gradient(90deg,#34D399,#6BE3A4); box-shadow: 0 0 6px rgba(107,227,164,0.4); }
+  .ltg-bar-general .ltg-bar-fill { background: linear-gradient(90deg,#7C3AED,#8B5CF6); box-shadow: 0 0 6px rgba(139,92,246,0.4); }
+  .ltg-bar-done    .ltg-bar-fill { background: linear-gradient(90deg,#34D399,#6BE3A4); }
+
+  .ltg-meta-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .ltg-pct { font-family: ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+  .ltg-status-text { font-size: 11px; color: var(--text-tertiary); }
+  .ltg-status-text.is-done   { color: #6BE3A4; font-weight: 600; }
+  .ltg-status-text.is-track  { color: #6BE3A4; }
+  .ltg-status-text.is-behind { color: var(--warning); }
+
+  .ltg-manual-row {
+    display: flex; align-items: center; gap: 10px; margin-top: 10px;
+    padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .ltg-manual-label { font-size: 10px; color: var(--text-tertiary); white-space: nowrap; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; }
+  .ltg-slider { flex: 1; accent-color: #8B5CF6; cursor: pointer; }
+  .ltg-manual-num {
+    width: 76px; padding: 6px 10px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.05);
+    color: var(--text-primary); font-size: 13px; font-weight: 600; font-family: inherit;
+    text-align: right; outline: none; transition: border-color 0.2s;
+  }
+  .ltg-manual-num:focus { border-color: rgba(139,92,246,0.55); }
+
+  .ltg-add-section { border-top: 1px solid rgba(255,255,255,0.06); margin-top: 14px; padding-top: 14px; }
+  .ltg-cat-row, .ltg-gymtype-row { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .ltg-cat-btn {
+    padding: 7px 16px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.04); color: var(--text-tertiary);
+    font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .ltg-cat-btn:hover { color: var(--text-primary); }
+  .ltg-cat-btn[data-cat="finance"].ltg-cat-active { background: rgba(251,191,36,0.15); color: #FBBF24; border-color: rgba(251,191,36,0.40); }
+  .ltg-cat-btn[data-cat="gym"].ltg-cat-active     { background: rgba(107,227,164,0.15); color: #6BE3A4; border-color: rgba(107,227,164,0.40); }
+  .ltg-cat-btn[data-cat="general"].ltg-cat-active  { background: rgba(139,92,246,0.18); color: #C4B5FD; border-color: rgba(139,92,246,0.40); }
+  .ltg-cat-btn[data-gymtype].ltg-cat-active        { background: rgba(139,92,246,0.18); color: #C4B5FD; border-color: rgba(139,92,246,0.40); }
+
+  .ltg-input {
+    width: 100%; padding: 11px 14px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.04);
+    color: var(--text-primary); font-size: 13px; font-family: inherit;
+    outline: none; margin-bottom: 8px; display: block;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .ltg-input:focus { border-color: rgba(139,92,246,0.55); box-shadow: 0 0 0 3px rgba(139,92,246,0.13); }
+  .ltg-input::placeholder { color: var(--text-tertiary); }
+  input[type="date"].ltg-input { color-scheme: dark; }
+
+  .ltg-hint {
+    font-size: 11px; color: var(--text-tertiary); padding: 4px 0 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .ltg-hint::before { content: '⚡'; font-size: 12px; }
+
+  .ltg-extra-fields { margin-bottom: 0; }
+  .ltg-add-row { display: flex; justify-content: flex-end; margin-top: 4px; }
+
   /* ── Tab bar ─────────────────────────────────────────────────── */
   .tabbar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 999; background: rgba(18,18,24,0.88); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); border-top: 1px solid rgba(255,255,255,0.07); padding-bottom: env(safe-area-inset-bottom,0); }
   .tabbar-inner { display: flex; justify-content: center; gap: 0; max-width: 480px; margin: 0 auto; }
@@ -667,6 +774,47 @@
         <button class="gm-polish-btn" id="tomorrowPolishBtn">✨ Polish</button>
       </div>
       <div class="gm-status-line" id="tomorrowStatus"></div>
+    </div>
+  </div>
+
+  <!-- 5: Long Term Goals -->
+  <div class="section">
+    <div class="section-title">Long Term Goals</div>
+    <div class="gm-card">
+      <div class="ltg-filter-tabs">
+        <button class="ltg-filter-tab ltg-filter-active" data-f="all">All</button>
+        <button class="ltg-filter-tab" data-f="finance">Finance</button>
+        <button class="ltg-filter-tab" data-f="gym">Gym</button>
+        <button class="ltg-filter-tab" data-f="general">General</button>
+      </div>
+      <div id="ltgList"></div>
+      <div id="ltgEmpty" class="empty-state">No long-term goals yet — add one below.</div>
+      <div class="ltg-add-section">
+        <div class="ltg-cat-row" id="ltgCatRow">
+          <button class="ltg-cat-btn ltg-cat-active" data-cat="finance">Finance</button>
+          <button class="ltg-cat-btn" data-cat="gym">Gym</button>
+          <button class="ltg-cat-btn" data-cat="general">General</button>
+        </div>
+        <input type="text" class="ltg-input" id="ltgNameInput" placeholder="Goal name (e.g. Reach $50,000 net worth)">
+        <input type="number" class="ltg-input" id="ltgTargetInput" placeholder="Target net worth ($)" step="any" min="0">
+        <div id="ltgFinanceHint" class="ltg-hint">Auto-tracks live net worth from Finance page</div>
+        <div id="ltgGymFields" style="display:none">
+          <div class="ltg-gymtype-row" id="ltgGymTypeRow">
+            <button class="ltg-cat-btn ltg-cat-active" data-gymtype="1rm">Exercise 1RM</button>
+            <button class="ltg-cat-btn" data-gymtype="bodyweight">Bodyweight</button>
+          </div>
+          <input type="text" class="ltg-input" id="ltgExerciseInput" placeholder="Exercise name (e.g. Bench Press)" style="display:none">
+        </div>
+        <div id="ltgGeneralFields" style="display:none">
+          <input type="text" class="ltg-input" id="ltgUnitInput" placeholder="Unit label (e.g. lbs, %, km, books) — optional">
+          <input type="number" class="ltg-input" id="ltgStartInput" placeholder="Starting value (optional, defaults to 0)" step="any">
+        </div>
+        <input type="date" class="ltg-input" id="ltgDateInput" title="Target completion date (optional)">
+        <div class="ltg-add-row">
+          <button class="gm-add-btn" id="ltgAddBtn">+ Add Goal</button>
+        </div>
+        <div class="gm-status-line" id="ltgStatus"></div>
+      </div>
     </div>
   </div>
 
@@ -1135,6 +1283,246 @@
     loadToday(); loadTomorrow();
   });
 
+  /* ── Long Term Goals ────────────────────────────────────────── */
+  const LTG_KEY = 'ltg_goals';
+  let ltgFilter = 'all';
+  let ltgCat    = 'finance';
+  let ltgGymType = '1rm';
+
+  function ltgLoad() { return storeGet(LTG_KEY) || []; }
+  function ltgSave(arr) { storeSet(LTG_KEY, arr); }
+
+  function ltgReadNetWorth() {
+    let g = 0;
+    ['bank','stocks','crypto','other'].forEach(k => {
+      (JSON.parse(localStorage.getItem('nw:'+k) || '[]')).forEach(it => { g += Number(it.amount) || 0; });
+    });
+    return g;
+  }
+
+  function ltgReadBodyweight() {
+    const data = JSON.parse(localStorage.getItem('po_coach_weights') || '[]');
+    if (!data.length) return null;
+    return data.reduce((a,b) => a.date > b.date ? a : b).weight;
+  }
+
+  function ltgRead1RM(exName) {
+    try {
+      const st = JSON.parse(localStorage.getItem('po_coach_v1') || '{}');
+      const ex = (st.exercises||[]).find(e => (e.name||'').toLowerCase() === exName.toLowerCase());
+      if (!ex) return null;
+      const logs = ((st.logs||{})[ex.id]) || [];
+      if (!logs.length) return null;
+      return Math.round(Math.max(...logs.map(l => l.weight*(1+l.reps/30))));
+    } catch { return null; }
+  }
+
+  function ltgGetCurrent(goal) {
+    if (goal.category === 'finance') return ltgReadNetWorth();
+    if (goal.category === 'gym') {
+      if (goal.gymType === 'bodyweight') return ltgReadBodyweight();
+      return ltgRead1RM(goal.exerciseName || '');
+    }
+    return Number(goal.manualCurrent) || 0;
+  }
+
+  function ltgFmtVal(val, goal) {
+    if (val === null || val === undefined) return '—';
+    if (goal.category === 'finance') return '$' + Math.round(val).toLocaleString();
+    const u = goal.unit || '';
+    const n = Number(val).toLocaleString(undefined, {maximumFractionDigits:1});
+    return u ? n + ' ' + u : n;
+  }
+
+  function ltgStatusInfo(goal, pct) {
+    if (pct >= 100) return { text: '✓ Completed!', cls: 'is-done' };
+    if (goal.targetDate) {
+      const created = new Date(goal.createdAt);
+      const now     = new Date();
+      const due     = new Date(goal.targetDate);
+      const totalMs = due - created;
+      const dateStr = due.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+      if (totalMs > 0) {
+        const expectedPct = Math.min(100, (now - created) / totalMs * 100);
+        if (pct >= expectedPct) return { text: 'On track · due ' + dateStr, cls: 'is-track' };
+        return { text: 'Behind · due ' + dateStr, cls: 'is-behind' };
+      }
+    }
+    if (pct >= 80) return { text: 'Almost there!', cls: '' };
+    if (pct >= 50) return { text: 'Halfway there', cls: '' };
+    if (pct >= 10) return { text: 'In progress', cls: '' };
+    return { text: 'Just started', cls: '' };
+  }
+
+  function ltgBuildRow(goal) {
+    const current = ltgGetCurrent(goal);
+    const pct     = current !== null ? Math.min(100, Math.max(0, current / goal.targetValue * 100)) : 0;
+    const pctR    = Math.round(pct);
+    const isDone  = pct >= 100;
+    const status  = ltgStatusInfo(goal, pct);
+
+    const catLabel = goal.category.charAt(0).toUpperCase() + goal.category.slice(1);
+    let subLabel = '';
+    if (goal.category === 'gym' && goal.gymType === '1rm') subLabel = (goal.exerciseName||'') + ' 1RM';
+    else if (goal.category === 'gym') subLabel = 'Bodyweight';
+
+    const div = document.createElement('div');
+    div.className = 'ltg-goal-row' + (isDone ? ' is-done' : '');
+    div.dataset.category = goal.category;
+
+    const gymState = JSON.parse(localStorage.getItem('po_coach_v1') || '{}');
+    const gymUnit  = gymState.units || 'lbs';
+
+    div.innerHTML =
+      '<div class="ltg-goal-header">'
+      + '<span class="ltg-badge ltg-badge-'+goal.category+'">' + esc(catLabel) + '</span>'
+      + '<span class="ltg-goal-name">' + esc(goal.name) + '</span>'
+      + '<button class="ltg-delete-btn" data-ltgdel="' + esc(goal.id) + '" title="Delete">×</button>'
+      + '</div>'
+      + '<div class="ltg-values-row">'
+      + '<span class="ltg-current-val">' + esc(ltgFmtVal(current, goal)) + '</span>'
+      + '<span class="ltg-val-sep">of</span>'
+      + '<span class="ltg-target-val">' + esc(ltgFmtVal(goal.targetValue, goal)) + '</span>'
+      + (subLabel ? '<span class="ltg-val-sep">·</span><span class="ltg-sub-label">' + esc(subLabel) + '</span>' : '')
+      + '</div>'
+      + '<div class="ltg-bar-track ltg-bar-' + (isDone ? 'done' : goal.category) + '">'
+      + '<div class="ltg-bar-fill" style="width:' + pctR + '%"></div>'
+      + '</div>'
+      + '<div class="ltg-meta-row">'
+      + '<span class="ltg-pct">' + pctR + '%</span>'
+      + '<span class="ltg-status-text ' + status.cls + '">' + esc(status.text) + '</span>'
+      + '</div>'
+      + (goal.category === 'general'
+        ? '<div class="ltg-manual-row">'
+          + '<span class="ltg-manual-label">Update</span>'
+          + '<input type="range" class="ltg-slider" min="0" max="' + goal.targetValue + '" step="' + (goal.targetValue > 100 ? Math.max(1, Math.round(goal.targetValue/100)) : 1) + '" value="' + (Number(goal.manualCurrent)||0) + '" data-ltgslider="' + esc(goal.id) + '">'
+          + '<input type="number" class="ltg-manual-num" min="0" max="' + goal.targetValue + '" step="any" value="' + (Number(goal.manualCurrent)||0) + '" data-ltgnum="' + esc(goal.id) + '">'
+          + '</div>'
+        : '');
+
+    div.querySelector('[data-ltgdel]').addEventListener('click', () => {
+      const arr = ltgLoad(), idx = arr.findIndex(g => g.id === goal.id);
+      if (idx < 0) return;
+      if (!confirm('Delete goal "' + arr[idx].name + '"?')) return;
+      arr.splice(idx, 1); ltgSave(arr); renderLTG();
+    });
+
+    const slider = div.querySelector('[data-ltgslider]');
+    const numEl  = div.querySelector('[data-ltgnum]');
+    if (slider && numEl) {
+      const updateManual = v => {
+        const arr = ltgLoad(), idx = arr.findIndex(g => g.id === goal.id);
+        if (idx < 0) return;
+        arr[idx].manualCurrent = v; ltgSave(arr);
+        const newPct = Math.min(100, Math.max(0, v / goal.targetValue * 100));
+        const fill  = div.querySelector('.ltg-bar-fill');
+        const pctEl = div.querySelector('.ltg-pct');
+        if (fill)  fill.style.width = Math.round(newPct) + '%';
+        if (pctEl) pctEl.textContent = Math.round(newPct) + '%';
+        const s2 = ltgStatusInfo(goal, newPct);
+        const stEl = div.querySelector('.ltg-status-text');
+        if (stEl) { stEl.textContent = s2.text; stEl.className = 'ltg-status-text ' + s2.cls; }
+        const cvEl = div.querySelector('.ltg-current-val');
+        if (cvEl) cvEl.textContent = ltgFmtVal(v, goal);
+      };
+      slider.addEventListener('input', () => { numEl.value = slider.value; updateManual(Number(slider.value)); });
+      numEl.addEventListener('change', () => {
+        const v = Math.max(0, Math.min(goal.targetValue, Number(numEl.value)));
+        numEl.value = v; slider.value = v; updateManual(v);
+      });
+    }
+    return div;
+  }
+
+  function renderLTG() {
+    const list  = document.getElementById('ltgList');
+    const empty = document.getElementById('ltgEmpty');
+    if (!list) return;
+    const goals    = ltgLoad();
+    const filtered = ltgFilter === 'all' ? goals : goals.filter(g => g.category === ltgFilter);
+    list.innerHTML = '';
+    if (!filtered.length) { empty.style.display = ''; return; }
+    empty.style.display = 'none';
+    filtered.forEach(g => list.appendChild(ltgBuildRow(g)));
+  }
+
+  function ltgUID() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+  function ltgSetFilter(f) {
+    ltgFilter = f;
+    document.querySelectorAll('.ltg-filter-tab').forEach(b => b.classList.toggle('ltg-filter-active', b.dataset.f === f));
+    renderLTG();
+  }
+
+  function ltgSetCat(c) {
+    ltgCat = c;
+    document.querySelectorAll('#ltgCatRow .ltg-cat-btn').forEach(b => b.classList.toggle('ltg-cat-active', b.dataset.cat === c));
+    document.getElementById('ltgFinanceHint').style.display = c === 'finance' ? '' : 'none';
+    document.getElementById('ltgGymFields').style.display   = c === 'gym'     ? '' : 'none';
+    document.getElementById('ltgGeneralFields').style.display = c === 'general' ? '' : 'none';
+    const tgt = document.getElementById('ltgTargetInput');
+    if      (c === 'finance') tgt.placeholder = 'Target net worth ($)';
+    else if (c === 'gym')     tgt.placeholder = 'Target value (lbs / kg)';
+    else                      tgt.placeholder = 'Target value';
+  }
+
+  function ltgSetGymType(t) {
+    ltgGymType = t;
+    document.querySelectorAll('#ltgGymTypeRow .ltg-cat-btn').forEach(b => b.classList.toggle('ltg-cat-active', b.dataset.gymtype === t));
+    document.getElementById('ltgExerciseInput').style.display = t === '1rm' ? '' : 'none';
+  }
+
+  function initLTG() {
+    document.querySelectorAll('.ltg-filter-tab').forEach(b => b.addEventListener('click', () => ltgSetFilter(b.dataset.f)));
+    document.querySelectorAll('#ltgCatRow .ltg-cat-btn').forEach(b => b.addEventListener('click', () => ltgSetCat(b.dataset.cat)));
+    document.querySelectorAll('#ltgGymTypeRow .ltg-cat-btn').forEach(b => b.addEventListener('click', () => ltgSetGymType(b.dataset.gymtype)));
+    ltgSetCat('finance');
+    ltgSetGymType('1rm');
+
+    document.getElementById('ltgAddBtn').addEventListener('click', () => {
+      const name   = document.getElementById('ltgNameInput').value.trim();
+      const target = parseFloat(document.getElementById('ltgTargetInput').value);
+      const status = document.getElementById('ltgStatus');
+      if (!name)           { status.textContent = 'Enter a goal name.'; return; }
+      if (!target || target <= 0) { status.textContent = 'Enter a valid target value.'; return; }
+
+      const goal = {
+        id: ltgUID(), category: ltgCat, name, targetValue: target,
+        createdAt: toYMD(new Date()),
+        targetDate: document.getElementById('ltgDateInput').value || null,
+      };
+
+      if (ltgCat === 'gym') {
+        goal.gymType = ltgGymType;
+        if (ltgGymType === '1rm') {
+          goal.exerciseName = document.getElementById('ltgExerciseInput').value.trim();
+          if (!goal.exerciseName) { status.textContent = 'Enter the exercise name.'; return; }
+        }
+        const gymState = JSON.parse(localStorage.getItem('po_coach_v1') || '{}');
+        goal.unit = gymState.units || 'lbs';
+      } else if (ltgCat === 'general') {
+        goal.unit           = document.getElementById('ltgUnitInput').value.trim();
+        goal.manualCurrent  = parseFloat(document.getElementById('ltgStartInput').value) || 0;
+      }
+
+      const arr = ltgLoad(); arr.push(goal); ltgSave(arr);
+      ['ltgNameInput','ltgTargetInput','ltgExerciseInput','ltgUnitInput','ltgStartInput','ltgDateInput']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+      status.textContent = '';
+      renderLTG();
+    });
+
+    document.getElementById('ltgNameInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('ltgAddBtn').click();
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') renderLTG();
+    });
+
+    renderLTG();
+  }
+
   /* ── Init ───────────────────────────────────────────────────── */
   async function init() {
     const { data } = await db.from('goals').select('id, value');
@@ -1168,6 +1556,7 @@
     updateDayBar();
     setInterval(updateDayBar, 60000);
     startTicker();
+    initLTG();
   }
   init();
 </script>
