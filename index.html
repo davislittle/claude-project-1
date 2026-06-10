@@ -866,6 +866,23 @@
 
 </div>
 <script>
+  // Google OAuth callback — token arrives here in the URL hash after redirect from Google
+  (function () {
+    const hash = new URLSearchParams(location.hash.slice(1));
+    if (hash.has('access_token')) {
+      const expected = localStorage.getItem('gfit_oauth_state');
+      if (!expected || hash.get('state') === expected) {
+        localStorage.setItem('gfit_tokens', JSON.stringify({
+          access_token: hash.get('access_token'),
+          expires_at:   Date.now() + parseInt(hash.get('expires_in') || '3600') * 1000
+        }));
+      }
+      localStorage.removeItem('gfit_oauth_state');
+      history.replaceState({}, '', location.pathname);
+      location.href = 'fitbit.html';
+    }
+  })();
+
   const ANTHROPIC_API_KEY = '';
   // [Sun, Mon, Tue, Wed, Thu, Fri, Sat] — hours as decimals (e.g. 8.5 = 8:30 AM, 24 = midnight, 25 = 1 AM)
   const SCHEDULE = [
