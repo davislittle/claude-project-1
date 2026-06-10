@@ -1308,13 +1308,38 @@ img, video, canvas, svg { max-width: 100%; }
     const PC_SYNCED_KEYS = ['po_coach_v1', 'po_coach_workout_done', 'po_coach_weights', 'po_coach_photos'];
     let db;
     try { db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) { return; }
+    // Returns true when every leaf of a parsed JSON value is null/empty-array/empty-object.
+    // Scalars (strings/numbers/booleans) count as non-empty, so only pure-array data
+    // structures are detected as empty (e.g. {exercises:[],logs:{}}).
+    function _remoteIsEmpty(val) {
+      if (val == null) return true;
+      if (Array.isArray(val)) return val.length === 0;
+      if (typeof val === 'object') return Object.values(val).every(v => _remoteIsEmpty(v));
+      return false;
+    }
     async function pull() {
       try {
         const { data } = await db.from('app_state').select('id,value').in('id', PC_SYNCED_KEYS);
-        if (!data || !data.length) return;
-        data.forEach(row => { try { localStorage.setItem(row.id, row.value); } catch(e) {} });
-        state = loadState(); wtData = loadWeights(); photos = loadPhotos(); doneDays = loadDoneDays();
-        renderAll(); wtRender(); renderPhotos();
+        const returnedKeys = new Set((data || []).map(r => r.id));
+        let changed = false;
+        (data || []).forEach(row => {
+          try {
+            const parsed = row.value != null ? JSON.parse(row.value) : null;
+            if (_remoteIsEmpty(parsed)) {
+              // Remote is empty — push local data up instead of overwriting local.
+              push(row.id, localStorage.getItem(row.id));
+            } else {
+              localStorage.setItem(row.id, row.value);
+              changed = true;
+            }
+          } catch(e) { push(row.id, localStorage.getItem(row.id)); }
+        });
+        // Any key not returned by Supabase at all — push local data to seed it.
+        PC_SYNCED_KEYS.forEach(k => { if (!returnedKeys.has(k)) push(k, localStorage.getItem(k)); });
+        if (changed) {
+          state = loadState(); wtData = loadWeights(); photos = loadPhotos(); doneDays = loadDoneDays();
+          renderAll(); wtRender(); renderPhotos();
+        }
       } catch(e) {}
     }
     function push(key, val) {

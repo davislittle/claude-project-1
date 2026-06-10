@@ -538,10 +538,25 @@ html, body {
   $('setReset').addEventListener('click', () => { if(!confirm('Wipe ALL water logs and settings?')) return; localStorage.removeItem(LS_KEY); state=loadState(); $('setModalBg').classList.remove('show'); renderDayPill(); renderWater(); });
 
   // Pull water data from Supabase; re-render if newer data came in.
+  // If Supabase has no data or empty logs, push local data up instead.
   (async () => {
     try {
       const { data } = await _db.from('app_state').select('id, value').eq('id', LS_KEY).maybeSingle();
-      if (!data || data.value == null) return;
+      if (!data || data.value == null) {
+        // No Supabase row at all — seed Supabase with local data.
+        _db.from('app_state').upsert({id: LS_KEY, value: JSON.stringify(state)}, {onConflict:'id'});
+        return;
+      }
+      try {
+        const parsed = JSON.parse(data.value);
+        const remoteHasLogs = parsed && Object.keys(parsed.logs || {}).length > 0;
+        const localHasLogs = Object.keys(state.logs || {}).length > 0;
+        if (!remoteHasLogs && localHasLogs) {
+          // Remote logs are empty but local has entries — push local up.
+          _db.from('app_state').upsert({id: LS_KEY, value: JSON.stringify(state)}, {onConflict:'id'});
+          return;
+        }
+      } catch(e) { /* parse failed — fall through to apply */ }
       if (localStorage.getItem(LS_KEY) !== data.value) {
         localStorage.setItem(LS_KEY, data.value);
         state = loadState();

@@ -2200,11 +2200,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 
   // ---- Apply a Supabase row's data back into localStorage ----
+  // _put only writes when the remote value is non-empty, so existing
+  // local data is never overwritten by empty remote arrays.
   function _applyRow(sbKey, sbData) {
     if (!sbData) return false;
     let wrote = false;
     function _put(lsKey, val) {
       if (val == null) return;
+      if (Array.isArray(val) && val.length === 0) return; // remote is empty — keep local
       localStorage.setItem(lsKey, JSON.stringify(val));
       wrote = true;
     }
@@ -2220,7 +2223,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         _put('passive_income', sbData.entries); _put('passive_income_rec', sbData.recurring); break;
       case 'finance_nw_meta':
         _put('nw:history', sbData.history); _put('nw:activity', sbData.activity);
-        _put('nw_currency', sbData.currency); break;
+        if (sbData.currency != null) { localStorage.setItem('nw_currency', JSON.stringify(sbData.currency)); wrote = true; }
+        break;
     }
     return wrote;
   }
@@ -4155,21 +4159,32 @@ input[type="date"]::-webkit-calendar-picker-indicator {
           return;
         }
         // Apply Supabase data into localStorage.
+        // _applyRow skips empty arrays, so it returns false when remote is empty.
+        // Track those keys and push local data up for them instead.
         let changed = false;
+        const toPush = [];
+        const returnedKeys = new Set(rows.map(r => r.id));
         rows.forEach(row => {
           try {
             const parsed = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
-            if (_applyRow(row.id, parsed)) changed = true;
-          } catch(e) { console.warn('[Finance sync] Could not parse row:', row.id, e); }
+            if (_applyRow(row.id, parsed)) {
+              changed = true;
+            } else {
+              // Remote row exists but was empty — seed Supabase with local data.
+              toPush.push(row.id);
+            }
+          } catch(e) { console.warn('[Finance sync] Could not parse row:', row.id, e); toPush.push(row.id); }
         });
+        // Push any keys that Supabase didn't return at all.
+        _SB_FINANCE_KEYS.forEach(k => { if (!returnedKeys.has(k)) toPush.push(k); });
+        if (toPush.length) toPush.forEach(k => sbPush(k));
         if (changed) {
           renderAllNetWorth();
           if (typeof renderSubs          === 'function') renderSubs();
           if (typeof renderPassiveIncome === 'function') renderPassiveIncome();
           console.log('[Finance sync] Loaded remote data from Supabase.');
         } else {
-          console.log('[Finance sync] Local data matches Supabase — pushing local data up.');
-          _SB_FINANCE_KEYS.forEach(k => sbPush(k));
+          console.log('[Finance sync] Local data is up to date.');
         }
       });
   }
