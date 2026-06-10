@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Finances</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js"></script>
 <script src="topbar.js" defer></script>
 <style>
 :root {
@@ -1823,6 +1824,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         </div>
       </div>
     </div>
+
+    <!-- Backup & Restore -->
+    <div style="margin-top:18px;padding:16px 18px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);border-radius:12px">
+      <div style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:12px">Backup &amp; Restore</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button id="finExportBtn" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:var(--text-primary);border-radius:8px;padding:8px 16px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s">↓ Export Backup</button>
+        <button id="finImportBtn" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:var(--text-primary);border-radius:8px;padding:8px 16px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s">↑ Import Backup</button>
+        <input type="file" id="finImportFile" accept=".json" style="display:none" />
+        <span id="finBackupMsg" style="font-size:12px;color:var(--text-tertiary)"></span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2138,13 +2150,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     catch (e) { return null; }
   }
 
-  // ---- Supabase client (safe-guard in case CDN failed to load) ----
-  const _SB_URL = 'https://onggaqxuriybodtyavsd.supabase.co';
-  const _SB_KEY = 'sb_publishable__D6jwlREF6WQiFeFZe6j1A_0N59qzPr';
-  const _db = (window.supabase && window.supabase.createClient)
-    ? window.supabase.createClient(_SB_URL, _SB_KEY)
-    : null;
-
   // ---- Map each localStorage key → which Supabase row it belongs to ----
   const LS_TO_SB_KEY = {
     'nw:bank':            'finance_accounts',
@@ -2181,15 +2186,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
   // ---- Push one consolidated row to Supabase ----
   function sbPush(sbKey) {
-    if (!_db) return;
     const payload = _buildPayload(sbKey);
     if (payload == null) return;
-    _db.from('app_state')
-      .upsert({ id: sbKey, value: JSON.stringify(payload) }, { onConflict: 'id' })
-      .then(({ error }) => {
-        if (error) console.error('[Finance sync] write failed — key:', sbKey, '| error:', error.message,
-          '\n(If this is an RLS/permission error, disable Row-Level Security on the app_state table in your Supabase dashboard.)');
-      });
+    AppSync.pushRaw(sbKey, JSON.stringify(payload));
   }
 
   // ---- storeSet: write to localStorage then push the matching Supabase row ----
@@ -2197,6 +2196,61 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
     const sbKey = LS_TO_SB_KEY[key];
     if (sbKey) sbPush(sbKey);
+  }
+
+  // ---- Backup & Restore ----
+  const _BACKUP_KEYS = [
+    'nw:bank','nw:stocks','nw:crypto','nw:other',
+    'subs','orders','wishlist',
+    'passive_income','passive_income_rec',
+    'nw:history','nw:activity','nw_currency'
+  ];
+
+  function exportBackup() {
+    const payload = { version: 1, exportedAt: new Date().toISOString(), data: {} };
+    _BACKUP_KEYS.forEach(k => { const v = storeGet(k); if (v != null) payload.data[k] = v; });
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const today = new Date().toISOString().slice(0, 10);
+    a.href = url; a.download = 'finance-backup-' + today + '.json';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    _backupMsg('Backup downloaded.', false);
+  }
+
+  function importBackup(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        const src = parsed.version === 1 ? parsed.data : parsed; // support legacy flat format
+        if (typeof src !== 'object' || src === null) throw new Error('Unrecognised format');
+        let count = 0;
+        _BACKUP_KEYS.forEach(k => { if (src[k] != null) { storeSet(k, src[k]); count++; } });
+        if (count === 0) { _backupMsg('No recognisable finance data found in file.', true); return; }
+        // Re-render everything with restored data.
+        renderAllNetWorth();
+        if (typeof renderSubs          === 'function') renderSubs();
+        if (typeof renderOrders        === 'function') renderOrders();
+        if (typeof renderWishlist      === 'function') renderWishlist();
+        if (typeof renderPassiveIncome === 'function') renderPassiveIncome();
+        _backupMsg('Restored ' + count + ' data set' + (count > 1 ? 's' : '') + '. Syncing to cloud…', false);
+      } catch(err) {
+        _backupMsg('Import failed: ' + err.message, true);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function _backupMsg(msg, isErr) {
+    const el = document.getElementById('finBackupMsg');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.color = isErr ? '#FF8A8A' : 'var(--text-tertiary)';
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.textContent = ''; }, 4000);
   }
 
   // ---- Apply a Supabase row's data back into localStorage ----
@@ -4135,59 +4189,53 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
   renderPassiveIncome();
 
+  // ---- Backup & Restore button wiring ----
+  document.getElementById('finExportBtn').addEventListener('click', exportBackup);
+  document.getElementById('finExportBtn').addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,0.11)'; });
+  document.getElementById('finExportBtn').addEventListener('mouseout',  function() { this.style.background = 'rgba(255,255,255,0.07)'; });
+  document.getElementById('finImportBtn').addEventListener('click', () => document.getElementById('finImportFile').click());
+  document.getElementById('finImportBtn').addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,0.11)'; });
+  document.getElementById('finImportBtn').addEventListener('mouseout',  function() { this.style.background = 'rgba(255,255,255,0.07)'; });
+  document.getElementById('finImportFile').addEventListener('change', function() { importBackup(this.files[0]); this.value = ''; });
+
   // ---- Sync finance data to/from Supabase on page load ----
-  if (_db) {
+  // Finance uses pullRaw because its Supabase row IDs differ from localStorage keys
+  // (multiple LS keys are consolidated into one Supabase row via _buildPayload/_applyRow).
+  (async () => {
     const _SB_FINANCE_KEYS = [
       'finance_accounts','finance_subscriptions','finance_orders',
       'finance_wishlist','finance_passive','finance_nw_meta'
     ];
-
-    // 1. Pull: merge Supabase → localStorage; re-render if anything changed.
-    _db.from('app_state').select('id, value').in('id', _SB_FINANCE_KEYS)
-      .then(({ data: rows, error }) => {
-        if (error) {
-          console.error('[Finance sync] pull failed:', error.message,
-            '\n Tip: if this says "violates row-level security", open your Supabase dashboard → Table Editor → app_state → Policies and disable RLS or add a public insert/select policy.');
-          // Even if pull fails, push local data up so it at least saves.
-          _SB_FINANCE_KEYS.forEach(k => sbPush(k));
-          return;
-        }
-        if (!rows || !rows.length) {
-          // Table is empty — push local data to seed Supabase.
-          console.log('[Finance sync] No remote data found — pushing local data to Supabase now.');
-          _SB_FINANCE_KEYS.forEach(k => sbPush(k));
-          return;
-        }
-        // Apply Supabase data into localStorage.
-        // _applyRow skips empty arrays, so it returns false when remote is empty.
-        // Track those keys and push local data up for them instead.
-        let changed = false;
-        const toPush = [];
-        const returnedKeys = new Set(rows.map(r => r.id));
-        rows.forEach(row => {
-          try {
-            const parsed = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
-            if (_applyRow(row.id, parsed)) {
-              changed = true;
-            } else {
-              // Remote row exists but was empty — seed Supabase with local data.
-              toPush.push(row.id);
-            }
-          } catch(e) { console.warn('[Finance sync] Could not parse row:', row.id, e); toPush.push(row.id); }
-        });
-        // Push any keys that Supabase didn't return at all.
-        _SB_FINANCE_KEYS.forEach(k => { if (!returnedKeys.has(k)) toPush.push(k); });
-        if (toPush.length) toPush.forEach(k => sbPush(k));
-        if (changed) {
-          renderAllNetWorth();
-          if (typeof renderSubs          === 'function') renderSubs();
-          if (typeof renderPassiveIncome === 'function') renderPassiveIncome();
-          console.log('[Finance sync] Loaded remote data from Supabase.');
-        } else {
-          console.log('[Finance sync] Local data is up to date.');
-        }
-      });
-  }
+    const { data: rows, error } = await AppSync.pullRaw(_SB_FINANCE_KEYS);
+    if (error) {
+      console.error('[Finance sync] pull failed:', error.message);
+      _SB_FINANCE_KEYS.forEach(k => sbPush(k));
+      return;
+    }
+    if (!rows || !rows.length) {
+      _SB_FINANCE_KEYS.forEach(k => sbPush(k));
+      return;
+    }
+    let changed = false;
+    const toPush = [];
+    const returnedKeys = new Set(rows.map(r => r.id));
+    rows.forEach(row => {
+      try {
+        const parsed = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
+        if (_applyRow(row.id, parsed)) { changed = true; }
+        else { toPush.push(row.id); }
+      } catch(e) { toPush.push(row.id); }
+    });
+    _SB_FINANCE_KEYS.forEach(k => { if (!returnedKeys.has(k)) toPush.push(k); });
+    if (toPush.length) toPush.forEach(k => sbPush(k));
+    if (changed) {
+      renderAllNetWorth();
+      if (typeof renderSubs          === 'function') renderSubs();
+      if (typeof renderOrders        === 'function') renderOrders();
+      if (typeof renderWishlist      === 'function') renderWishlist();
+      if (typeof renderPassiveIncome === 'function') renderPassiveIncome();
+    }
+  })();
 
 })();
 </script>

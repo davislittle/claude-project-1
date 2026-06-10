@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Davis' Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="sync.js"></script>
   <style>
     :root {
       --text-primary: #FAFAFA;
@@ -542,6 +543,43 @@
     .gm-status-line { font-size: 11px; color: var(--text-tertiary); margin-top: 6px; min-height: 16px; }
     .gm-status-line.error { color: var(--danger); }
 
+    /* Daily recurring toggle (in the add row) */
+    .gm-daily-toggle {
+      padding: 9px 13px; border-radius: 100px;
+      border: 1.5px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-tertiary); font-size: 12px; font-weight: 600;
+      font-family: inherit; cursor: pointer; white-space: nowrap;
+      flex-shrink: 0; transition: all 0.15s;
+    }
+    .gm-daily-toggle:hover { border-color: rgba(99,162,255,0.42); color: #93C5FD; }
+    .gm-daily-toggle.active {
+      background: rgba(99,162,255,0.16); border-color: rgba(99,162,255,0.55);
+      color: #93C5FD; box-shadow: 0 0 12px rgba(99,162,255,0.18);
+    }
+    /* "↻ Daily" badge on recurring rows */
+    .gm-recur-badge {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.02em;
+      padding: 3px 7px; border-radius: 100px;
+      background: rgba(99,162,255,0.14); border: 1px solid rgba(99,162,255,0.28);
+      color: #93C5FD; white-space: nowrap; flex-shrink: 0; user-select: none;
+    }
+    /* Per-goal streak display */
+    .gm-goal-streak {
+      font-size: 11px; color: #FFB347; font-weight: 600;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    /* Recurring goal row tint */
+    .gm-goal-row.is-recurring { border-color: rgba(99,162,255,0.13); background: rgba(99,162,255,0.04); }
+    .gm-goal-row.is-recurring:hover { background: rgba(99,162,255,0.07); }
+    /* Section label above recurring list */
+    .gm-recurring-divider {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-tertiary); padding: 4px 4px 4px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .gm-recurring-divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.07); }
+
     /* Tomorrow card */
     .gm-card-tomorrow .gm-progress-row { display: none; }
     .gm-tomorrow-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
@@ -743,12 +781,20 @@
       </div>
 
       <div class="gm-bar" id="gmBar"></div>
+
+      <!-- Daily recurring goals appear above one-time goals -->
+      <div id="recurringSection" style="display:none;margin-bottom:4px">
+        <div class="gm-recurring-divider">↻ Daily</div>
+        <ul id="recurringList" class="gm-list"></ul>
+      </div>
+
       <ul id="goalList" class="gm-list"></ul>
       <div id="emptyState" class="empty-state">No goals for today yet — add one below.</div>
       <button class="gm-push-btn" id="gmPushBtn">Push remaining to tomorrow →</button>
 
       <div class="goal-input-wrap gm-input-wrap">
         <input type="text" id="goalInput" placeholder="Add a goal for today…">
+        <button class="gm-daily-toggle" id="goalDailyToggle" title="Toggle daily recurring mode">↻ Daily</button>
         <button class="gm-add-btn"    id="goalAddBtn">+ Add</button>
         <button class="gm-polish-btn" id="goalPolishBtn">✨ Polish</button>
       </div>
@@ -821,9 +867,6 @@
 </div>
 <script>
   const ANTHROPIC_API_KEY = '';
-  const SUPABASE_URL = 'https://onggaqxuriybodtyavsd.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable__D6jwlREF6WQiFeFZe6j1A_0N59qzPr';
-  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   // [Sun, Mon, Tue, Wed, Thu, Fri, Sat] — hours as decimals (e.g. 8.5 = 8:30 AM, 24 = midnight, 25 = 1 AM)
   const SCHEDULE = [
     { wake: 9,    sleep: 24    }, // Sunday
@@ -840,13 +883,11 @@
   /* ── Storage ────────────────────────────────────────────────── */
   function storeGet(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
   function storeSet(key, val) {
-    localStorage.setItem(key, JSON.stringify(val));
-    if (key.startsWith('goals:')) window.dispatchEvent(new CustomEvent('goals-changed'));
-    db.from('goals').upsert({ id: key, value: JSON.stringify(val) });
+    AppSync.set(key, val);
+    if (key.startsWith('goals:') || key === 'recurring_goals') window.dispatchEvent(new CustomEvent('goals-changed'));
   }
   function storeDelete(key) {
-    localStorage.removeItem(key);
-    db.from('goals').delete().eq('id', key);
+    AppSync.del(key);
   }
   function storeListKeys(prefix) {
     const keys = [];
@@ -912,6 +953,75 @@
       lastProcessedDate = date;
     }
     localStorage.setItem('goal_streak_v1', JSON.stringify({count, lastProcessedDate}));
+  }
+
+  /* ── Daily Recurring Goals ─────────────────────────────────── */
+  const RECURRING_KEY = 'recurring_goals';
+  let addAsRecurring = false;
+
+  function getYesterdayDateString() {
+    const active = getActiveDateString();
+    const [y,m,d] = active.split('-').map(Number);
+    const dt = new Date(y, m-1, d); dt.setDate(dt.getDate()-1); return toYMD(dt);
+  }
+  function recurLoad() { return storeGet(RECURRING_KEY) || []; }
+  function recurSave(arr) { storeSet(RECURRING_KEY, arr); }
+
+  function buildRecurRow(goal, idx) {
+    const activeDate = getActiveDateString();
+    const isDone = goal.lastCompletedDate === activeDate;
+    const li = document.createElement('li');
+    li.className = 'gm-goal-row is-recurring' + (isDone ? ' is-done' : '');
+
+    const cbWrap = document.createElement('label'); cbWrap.className = 'gm-checkbox-wrap';
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = isDone;
+    const cbVis = document.createElement('div'); cbVis.className = 'gm-checkbox-visual';
+    cbWrap.append(cb, cbVis); li.appendChild(cbWrap);
+
+    const txt = document.createElement('div'); txt.className = 'gm-goal-text'; txt.textContent = goal.text;
+    li.appendChild(txt);
+
+    const badge = document.createElement('span'); badge.className = 'gm-recur-badge'; badge.textContent = '↻ Daily';
+    li.appendChild(badge);
+
+    if (goal.streak > 0) {
+      const s = document.createElement('span'); s.className = 'gm-goal-streak';
+      s.textContent = '🔥 ' + goal.streak + (goal.streak === 1 ? ' day' : ' days');
+      li.appendChild(s);
+    }
+
+    const del = document.createElement('button'); del.className = 'goal-delete'; del.textContent = '×';
+    li.appendChild(del);
+
+    cb.addEventListener('change', () => {
+      const arr = recurLoad(); const g = arr[idx]; const yesterday = getYesterdayDateString();
+      if (cb.checked) {
+        g.streak = g.lastCompletedDate === yesterday ? (g.streak||0)+1 : 1;
+        g.lastCompletedDate = activeDate;
+      } else {
+        g.streak = Math.max(0, (g.streak||0)-1);
+        g.lastCompletedDate = g.streak > 0 ? yesterday : null;
+      }
+      recurSave(arr); renderRecurring(); renderTodayHeader();
+    });
+
+    del.addEventListener('click', () => {
+      if (!confirm('Remove daily recurring goal "' + goal.text + '"?')) return;
+      const arr = recurLoad(); arr.splice(idx,1); recurSave(arr);
+      renderRecurring(); renderTodayHeader();
+    });
+
+    return li;
+  }
+
+  function renderRecurring() {
+    const goals = recurLoad();
+    const section = document.getElementById('recurringSection');
+    const list = document.getElementById('recurringList');
+    if (!goals.length) { section.style.display = 'none'; return; }
+    section.style.display = '';
+    list.innerHTML = '';
+    goals.forEach((g,i) => list.appendChild(buildRecurRow(g,i)));
   }
 
   /* ── Day Ring ───────────────────────────────────────────────── */
@@ -984,11 +1094,18 @@
 
   function buildTickerItems() {
     const goals = storeGet(`goals:${getActiveDateString()}`) || [];
-    const total = goals.length, done = goals.filter(g=>g.done).length;
+    const activeDate = getActiveDateString();
+    const recurGoals = recurLoad();
+    const pendingRecur = recurGoals.filter(g => g.lastCompletedDate !== activeDate);
+    const total = goals.length + recurGoals.length;
+    const done = goals.filter(g=>g.done).length + (recurGoals.length - pendingRecur.length);
     let items;
-    if (total===0)      items = [{status:'empty',   text:'No goals set for today — add one to get rolling.'}];
-    else if (done===total) items = [{status:'done', text:'✓ All goals done — solid day.'}];
-    else               items = goals.filter(g=>!g.done).map(g=>({status:'pending',text:g.text}));
+    if (total===0)         items = [{status:'empty', text:'No goals set for today — add one to get rolling.'}];
+    else if (done===total) items = [{status:'done',  text:'✓ All goals done — solid day.'}];
+    else items = [
+      ...pendingRecur.map(g => ({status:'pending', text: g.text + ' ↻'})),
+      ...goals.filter(g=>!g.done).map(g => ({status:'pending', text: g.text}))
+    ];
     return {items, done, total};
   }
 
@@ -1040,17 +1157,27 @@
 
   function renderTodayHeader() {
     const goals = storeGet(`goals:${getActiveDateString()}`) || [];
-    const total = goals.length, done = goals.filter(g=>g.done).length;
-    document.getElementById('gmProgressNum').textContent  = done;
+    const activeDate = getActiveDateString();
+    const recurGoals = recurLoad();
+    const recurDone  = recurGoals.filter(g => g.lastCompletedDate === activeDate).length;
+    const total = goals.length + recurGoals.length;
+    const done  = goals.filter(g=>g.done).length + recurDone;
+    document.getElementById('gmProgressNum').textContent   = done;
     document.getElementById('gmProgressTotal').textContent = `/ ${total}`;
     document.getElementById('gmProgressLabel').textContent =
       total===0 ? 'no goals yet' : done===total ? 'all done — solid day' : 'complete';
 
     const bar = document.getElementById('gmBar');
     bar.innerHTML = '';
+    // Recurring goals first (blue tint when done)
+    recurGoals.forEach(g => {
+      const seg = document.createElement('div');
+      seg.className = 'gm-bar-seg' + (g.lastCompletedDate === activeDate ? ' gm-bar-seg-done' : '');
+      bar.appendChild(seg);
+    });
     goals.forEach(g => {
       const seg = document.createElement('div');
-      seg.className = 'gm-bar-seg' + (g.done?' gm-bar-seg-done':'');
+      seg.className = 'gm-bar-seg' + (g.done ? ' gm-bar-seg-done' : '');
       bar.appendChild(seg);
     });
 
@@ -1525,25 +1652,55 @@
 
   /* ── Init ───────────────────────────────────────────────────── */
   async function init() {
-    const { data } = await db.from('goals').select('id, value');
-    if (data) {
-      for (const row of data) localStorage.setItem(row.id, row.value);
-    }
+    await AppSync.pull({
+      keys: [RECURRING_KEY, LTG_KEY, 'goal_streak_v1'],
+      prefixes: ['goals:'],
+    });
 
     runRollover();
     runStreakCheck();
     loadToday();
     loadTomorrow();
     renderStreak();
+    renderRecurring();
 
-    makeAddHandlers(
-      document.getElementById('goalInput'),
-      document.getElementById('goalAddBtn'),
-      document.getElementById('goalPolishBtn'),
-      `goals:${getActiveDateString()}`,
-      document.getElementById('polishStatus'),
-      loadToday
-    );
+    // ── Wire today's add — handles both one-time and daily recurring modes ──
+    const _input     = document.getElementById('goalInput');
+    const _addBtn    = document.getElementById('goalAddBtn');
+    const _polishBtn = document.getElementById('goalPolishBtn');
+    const _toggle    = document.getElementById('goalDailyToggle');
+    const _status    = document.getElementById('polishStatus');
+
+    _toggle.addEventListener('click', () => {
+      addAsRecurring = !addAsRecurring;
+      _toggle.classList.toggle('active', addAsRecurring);
+      _input.placeholder = addAsRecurring ? 'Name this daily recurring goal…' : 'Add a goal for today…';
+    });
+
+    const _doAdd = text => {
+      if (!text) return;
+      if (addAsRecurring) {
+        const arr = recurLoad();
+        arr.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2), text, streak: 0, lastCompletedDate: null });
+        recurSave(arr); renderRecurring();
+      } else {
+        const key = `goals:${getActiveDateString()}`;
+        const d = storeGet(key)||[]; d.push({text, done:false}); storeSet(key,d); loadToday();
+      }
+      _input.value = '';
+    };
+
+    _addBtn.addEventListener('click', () => _doAdd(_input.value.trim()));
+    _input.addEventListener('keydown', e => { if (e.key==='Enter') _doAdd(_input.value.trim()); });
+    _polishBtn.addEventListener('click', async () => {
+      const text = _input.value.trim(); if (!text) return;
+      if (!ANTHROPIC_API_KEY) { _doAdd(text); showStatus(_status,'Polish needs an Anthropic API key — added as-typed.',false,3500); return; }
+      _polishBtn.disabled=true; _polishBtn.textContent='✨ Polishing…';
+      try { _doAdd(await polishGoal(text)); }
+      catch { _doAdd(text); showStatus(_status,'Polish failed — added as-typed.',true,3500); }
+      finally { _polishBtn.disabled=false; _polishBtn.textContent='✨ Polish'; }
+    });
+
     makeAddHandlers(
       document.getElementById('tomorrowInput'),
       document.getElementById('tomorrowAddBtn'),
@@ -1555,6 +1712,14 @@
 
     updateDayBar();
     setInterval(updateDayBar, 60000);
+
+    // Midnight date-change watcher — re-render recurring goals when the active day rolls over
+    let _knownDate = getActiveDateString();
+    setInterval(() => {
+      const d = getActiveDateString();
+      if (d !== _knownDate) { _knownDate = d; renderRecurring(); loadToday(); }
+    }, 60000);
+
     startTicker();
     initLTG();
   }

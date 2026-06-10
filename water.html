@@ -194,6 +194,7 @@ html, body {
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js"></script>
 <script src="topbar.js" defer></script>
 </head>
 <body>
@@ -345,9 +346,6 @@ html, body {
   function subDoseLabel(s) { return (s.dose != null ? s.dose : s.defaultDose) + ' ' + (s.unit || ''); }
 
   const LS_KEY = 'po_water_v1';
-  const _SB_URL = 'https://onggaqxuriybodtyavsd.supabase.co';
-  const _SB_KEY = 'sb_publishable__D6jwlREF6WQiFeFZe6j1A_0N59qzPr';
-  const _db = supabase.createClient(_SB_URL, _SB_KEY);
   function loadState() { try { const raw = localStorage.getItem(LS_KEY); if (raw) return normalize(JSON.parse(raw)); } catch(e) {} return normalize({}); }
   function normalize(s) {
     s = s || {};
@@ -362,8 +360,7 @@ html, body {
     return s;
   }
   function saveState() {
-    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {}
-    try { _db.from('app_state').upsert({id: LS_KEY, value: JSON.stringify(state)}, {onConflict:'id'}); } catch(e) {}
+    AppSync.set(LS_KEY, state);
   }
   let state = loadState();
   $('appTitle').textContent = CONFIG.appTitle || 'Water Coach';
@@ -537,33 +534,22 @@ html, body {
   $('setImportFile').addEventListener('change', e => { const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try { if(!confirm('Replace ALL data?')) return; state=normalize(JSON.parse(r.result)); saveState(); renderSettings(); renderDayPill(); renderWater(); } catch(err){alert('Import failed: '+err.message);} }; r.readAsText(f); });
   $('setReset').addEventListener('click', () => { if(!confirm('Wipe ALL water logs and settings?')) return; localStorage.removeItem(LS_KEY); state=loadState(); $('setModalBg').classList.remove('show'); renderDayPill(); renderWater(); });
 
-  // Pull water data from Supabase; re-render if newer data came in.
-  // If Supabase has no data or empty logs, push local data up instead.
-  (async () => {
-    try {
-      const { data } = await _db.from('app_state').select('id, value').eq('id', LS_KEY).maybeSingle();
-      if (!data || data.value == null) {
-        // No Supabase row at all — seed Supabase with local data.
-        _db.from('app_state').upsert({id: LS_KEY, value: JSON.stringify(state)}, {onConflict:'id'});
-        return;
-      }
-      try {
-        const parsed = JSON.parse(data.value);
-        const remoteHasLogs = parsed && Object.keys(parsed.logs || {}).length > 0;
-        const localHasLogs = Object.keys(state.logs || {}).length > 0;
-        if (!remoteHasLogs && localHasLogs) {
-          // Remote logs are empty but local has entries — push local up.
-          _db.from('app_state').upsert({id: LS_KEY, value: JSON.stringify(state)}, {onConflict:'id'});
-          return;
-        }
-      } catch(e) { /* parse failed — fall through to apply */ }
-      if (localStorage.getItem(LS_KEY) !== data.value) {
-        localStorage.setItem(LS_KEY, data.value);
-        state = loadState();
-        renderDayPill(); renderWater();
-      }
-    } catch(e) {}
-  })();
+  // Pull water data from Supabase; re-render if newer data arrived.
+  // Water state has a non-empty substances array by default, so we can't use the
+  // generic isEmpty check — instead we check whether the remote has any log entries.
+  AppSync.pull({
+    keys: [LS_KEY],
+    apply: (key, parsed) => {
+      if (!parsed) return false;
+      const remoteHasLogs = Object.keys(parsed.logs || {}).length > 0;
+      const localHasLogs  = Object.keys(state.logs  || {}).length > 0;
+      if (!remoteHasLogs && localHasLogs) return false; // remote empty — push local up
+      localStorage.setItem(key, JSON.stringify(parsed));
+      state = loadState();
+      return true;
+    },
+    onUpdate: () => { renderDayPill(); renderWater(); }
+  });
 
   renderDayPill(); renderWater();
   setInterval(() => { renderDayPill(); renderWater(); }, 60000);

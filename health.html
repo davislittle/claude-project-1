@@ -227,6 +227,7 @@ main {
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js"></script>
 <script src="topbar.js" defer></script>
 </head>
 <body>
@@ -300,15 +301,7 @@ main {
   'use strict';
 
   const storeGet = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
-  const _SB_URL = 'https://onggaqxuriybodtyavsd.supabase.co';
-  const _SB_KEY = 'sb_publishable__D6jwlREF6WQiFeFZe6j1A_0N59qzPr';
-  const _db = supabase.createClient(_SB_URL, _SB_KEY);
-  const storeSet = (k, v) => {
-    localStorage.setItem(k, JSON.stringify(v));
-    if (k.startsWith('stack:')) {
-      try { _db.from('app_state').upsert({id: k, value: JSON.stringify(v)}, {onConflict:'id'}); } catch(e) {}
-    }
-  };
+  const storeSet = (k, v) => AppSync.set(k, v);
 
   function getActiveDate() {
     const now = new Date();
@@ -555,45 +548,11 @@ main {
 
   setInterval(() => { const nk=`stack:taken:${getActiveDate()}`; if(nk!==todayKey) todayKey=nk; render(); }, 60000);
 
-  // Returns true when a parsed JSON value has no meaningful data.
-  function _sbEmpty(val) {
-    if (val == null) return true;
-    if (Array.isArray(val)) return val.length === 0;
-    if (typeof val === 'object') return Object.keys(val).length === 0;
-    return false; // scalars are never empty
-  }
-  function _pushLocal(k) {
-    const v = localStorage.getItem(k);
-    if (v != null) _db.from('app_state').upsert({id: k, value: v}, {onConflict:'id'});
-  }
-
   // Pull all stack data from Supabase on load; re-render if anything changed.
-  // Local data wins when remote is empty — remote wins when it has real data.
-  (async () => {
-    try {
-      const { data } = await _db.from('app_state').select('id, value').like('id', 'stack:%');
-      const returnedKeys = new Set((data || []).map(r => r.id));
-      // Always push permanent keys that Supabase doesn't have yet.
-      ['stack:items', 'stack:low', 'stack:version'].forEach(k => {
-        if (!returnedKeys.has(k)) _pushLocal(k);
-      });
-      if (!data || !data.length) return;
-      let changed = false;
-      data.forEach(row => {
-        try {
-          const parsed = row.value != null ? JSON.parse(row.value) : null;
-          if (_sbEmpty(parsed)) {
-            // Remote is empty — push local data up instead of overwriting local.
-            _pushLocal(row.id);
-          } else if (localStorage.getItem(row.id) !== row.value) {
-            localStorage.setItem(row.id, row.value);
-            changed = true;
-          }
-        } catch(e) { _pushLocal(row.id); }
-      });
-      if (changed) render();
-    } catch(e) {}
-  })();
+  AppSync.pull({
+    prefixes: ['stack:'],
+    onUpdate: () => render()
+  });
 
   render();
   startTicker();
