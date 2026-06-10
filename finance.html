@@ -1548,6 +1548,91 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   box-shadow: 0 0 6px rgba(107,227,164,0.7);
 }
 
+.pi-select {
+  padding: 9px 12px; background: rgba(0,0,0,0.28);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+  color: var(--text-primary); font-family: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; appearance: none; -webkit-appearance: none; outline: none; width: 100%;
+}
+.pi-num-input {
+  background: transparent; border: none; outline: none;
+  color: var(--text-primary); font-family: var(--font-mono); font-size: 14px; font-weight: 600;
+  padding: 9px 12px; -moz-appearance: textfield; width: 100%;
+}
+.pi-num-input::-webkit-outer-spin-button, .pi-num-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.pi-text-input {
+  background: transparent; border: none; outline: none;
+  color: var(--text-primary); font-family: inherit; font-size: 14px;
+  padding: 9px 12px; width: 100%;
+}
+.pi-field-input {
+  background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; width: 100%;
+}
+.pi-field-label {
+  font-size: 10px; letter-spacing: 0.12em; font-weight: 700; text-transform: uppercase;
+  color: var(--text-tertiary); font-family: var(--font-mono); margin-bottom: 6px;
+}
+.pi-green-btn {
+  padding: 0 18px; background: linear-gradient(180deg,#6EE7B7,#4ED4A0); color: #04201A;
+  border: none; border-radius: 9px; font-family: inherit; font-size: 13px; font-weight: 700;
+  cursor: pointer; white-space: nowrap; box-shadow: 0 4px 14px rgba(110,231,183,0.22);
+  transition: transform 0.12s, box-shadow 0.18s;
+}
+.pi-green-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(110,231,183,0.36); }
+.pi-green-btn:active { transform: scale(0.97); }
+.pi-month-check {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 8px 4px; border-radius: 8px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02);
+  transition: background 0.15s, border-color 0.15s; user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.pi-month-check input { position: absolute; opacity: 0; pointer-events: none; }
+.pi-month-check-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); transition: background 0.15s;
+}
+.pi-month-check-label { font-size: 10px; font-weight: 700; color: var(--text-tertiary); }
+.pi-month-check.checked {
+  background: rgba(110,231,183,0.12); border-color: rgba(110,231,183,0.35);
+}
+.pi-month-check.checked .pi-month-check-dot { background: #6EE7B7; box-shadow: 0 0 6px rgba(110,231,183,0.7); }
+.pi-month-check.checked .pi-month-check-label { color: #6EE7B7; }
+/* Calendar month rows */
+.pi-cal-row {
+  display: grid; grid-template-columns: 80px 1fr auto;
+  gap: 12px; align-items: center;
+  padding: 10px 14px; border-radius: 12px;
+  background: rgba(255,255,255,0.025); border: 1px solid transparent;
+  transition: background 0.15s;
+}
+.pi-cal-row.is-current { background: rgba(110,231,183,0.06); border-color: rgba(110,231,183,0.18); }
+.pi-cal-row.has-override { border-color: rgba(242,192,99,0.30); background: rgba(242,192,99,0.05); }
+.pi-cal-month { font-size: 12px; font-weight: 700; color: var(--text-secondary); }
+.pi-cal-month.cur { color: #6EE7B7; }
+.pi-cal-sources { display: flex; flex-wrap: wrap; gap: 5px; }
+.pi-cal-pill {
+  font-size: 10px; font-weight: 700; font-family: var(--font-mono);
+  padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+}
+.pi-cal-override-badge {
+  font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  color: #F2C063; background: rgba(242,192,99,0.12);
+  border: 1px solid rgba(242,192,99,0.25); border-radius: 999px;
+  padding: 2px 7px;
+}
+.pi-cal-total { font-size:14px; font-weight:700; font-family:var(--font-mono); color:var(--text-primary); white-space:nowrap; }
+.pi-cal-total.has-income { color: #6BE3A4; }
+/* Override input for calendar month */
+.pi-override-input {
+  background: rgba(0,0,0,0.30); border: 1px solid rgba(242,192,99,0.30);
+  border-radius: 8px; color: var(--text-primary);
+  font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+  padding: 5px 10px; outline: none; width: 110px;
+  -moz-appearance: textfield;
+}
+.pi-override-input::-webkit-outer-spin-button, .pi-override-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
 .pi-period-btn {
   padding: 6px 14px; border: none; background: transparent;
   color: rgba(255,255,255,0.45); border-radius: 7px;
@@ -1882,58 +1967,114 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     <span class="section-title-text">PASSIVE INCOME</span>
   </div>
 
-  <!-- Hero totals card -->
+  <!-- Hero totals -->
   <div class="card" style="background:linear-gradient(135deg,rgba(110,231,183,0.08),rgba(125,211,252,0.04));border:1px solid rgba(110,231,183,0.18)">
-    <!-- Period selector -->
-    <div style="display:flex;gap:4px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:3px;margin-bottom:16px;width:fit-content">
-      <button id="piPeriodAll"     class="pi-period-btn pi-period-active" data-period="all">All time</button>
-      <button id="piPeriodYear"    class="pi-period-btn" data-period="year">This year</button>
-      <button id="piPeriodMonth"   class="pi-period-btn" data-period="month">This month</button>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:6px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
       <div>
-        <div id="piTotalLabel" style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;font-weight:500">All-time earned</div>
-        <div id="piTotal" style="font-size:34px;font-weight:700;color:#6BE3A4;line-height:1.05;margin-top:2px">$0</div>
+        <div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.08em;font-weight:700;margin-bottom:4px">This month</div>
+        <div id="piHeroMonth" style="font-size:28px;font-weight:700;color:#6BE3A4;line-height:1;font-variant-numeric:tabular-nums">$0</div>
       </div>
       <div style="text-align:right">
-        <div id="piSecondLabel" style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;font-weight:500">This month</div>
-        <div id="piMonthTotal" style="font-size:22px;font-weight:700;color:var(--text-primary);margin-top:2px">$0</div>
+        <div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.08em;font-weight:700;margin-bottom:4px">This year</div>
+        <div id="piHeroYear" style="font-size:28px;font-weight:700;color:var(--text-primary);line-height:1;font-variant-numeric:tabular-nums">$0</div>
       </div>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px" id="piAccountTotals"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px" id="piAccountTotals"></div>
   </div>
 
-  <!-- Add entry card -->
+  <!-- Year navigator + monthly calendar -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin:20px 2px 10px">
+    <span style="font-size:10px;letter-spacing:0.18em;font-weight:800;text-transform:uppercase;color:var(--text-tertiary);font-family:var(--font-mono)">YEAR VIEW</span>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button id="piYearPrev" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--text-secondary);border-radius:7px;padding:4px 10px;font-family:inherit;font-size:13px;cursor:pointer">‹</button>
+      <span id="piYearLabel" style="font-size:13px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;min-width:40px;text-align:center"></span>
+      <button id="piYearNext" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--text-secondary);border-radius:7px;padding:4px 10px;font-family:inherit;font-size:13px;cursor:pointer">›</button>
+    </div>
+  </div>
+  <div id="piCalendar" style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px"></div>
+
+  <!-- Add income card with type toggle -->
   <div class="card" style="background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.05)">
-    <div style="font-size:10px;letter-spacing:0.18em;font-weight:800;text-transform:uppercase;color:var(--text-tertiary);font-family:var(--font-mono);margin-bottom:10px">+ LOG INCOME</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-      <label class="date-field" title="Date received"><span class="date-emoji" aria-hidden="true">📅</span><input type="date" id="piDate" /></label>
-      <select id="piAccount" style="padding:9px 12px;background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:var(--text-primary);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;appearance:none;-webkit-appearance:none;outline:none">
-        <option value="Capital One">Capital One</option>
-        <option value="Truist">Truist</option>
-        <option value="Venmo">Venmo</option>
-        <option value="Roth">Roth</option>
-        <option value="US Bank">US Bank</option>
-      </select>
+    <div style="font-size:10px;letter-spacing:0.18em;font-weight:800;text-transform:uppercase;color:var(--text-tertiary);font-family:var(--font-mono);margin-bottom:12px">+ LOG INCOME</div>
+    <!-- Type toggle -->
+    <div style="display:flex;gap:4px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:3px;margin-bottom:14px;width:fit-content">
+      <button id="piTypeOnce" class="pi-period-btn pi-period-active" data-type="once">One-time</button>
+      <button id="piTypeRec"  class="pi-period-btn" data-type="rec">Recurring monthly</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1.6fr auto;gap:8px;align-items:stretch;padding:4px;background:rgba(0,0,0,0.30);border-radius:12px">
-      <input type="number" id="piAmount" placeholder="Amount" step="0.01" min="0" style="background:transparent;border:none;outline:none;color:var(--text-primary);font-family:var(--font-mono);font-size:14px;font-weight:600;padding:9px 12px;-moz-appearance:textfield;text-align:right" />
-      <input type="text" id="piDesc" placeholder="Source (e.g. Furniture flip, NIL)" style="background:transparent;border:none;outline:none;color:var(--text-primary);font-family:inherit;font-size:14px;padding:9px 12px" />
-      <button id="piAddBtn" style="padding:0 18px;background:linear-gradient(180deg,#6EE7B7,#4ED4A0);color:#04201A;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 4px 14px rgba(110,231,183,0.22)">+ Add</button>
+
+    <!-- ONE-TIME form -->
+    <div id="piFormOnce">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <label class="date-field" title="Date received"><span class="date-emoji" aria-hidden="true">📅</span><input type="date" id="piDate" /></label>
+        <select id="piAccount" class="pi-select">
+          <option value="Capital One">Capital One</option>
+          <option value="Truist">Truist</option>
+          <option value="Venmo">Venmo</option>
+          <option value="Roth">Roth</option>
+          <option value="US Bank">US Bank</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1.6fr auto;gap:8px;align-items:stretch;padding:4px;background:rgba(0,0,0,0.30);border-radius:12px">
+        <input type="number" id="piAmount" placeholder="Amount" step="0.01" min="0" class="pi-num-input" style="text-align:right" />
+        <input type="text" id="piDesc" placeholder="Source (e.g. Furniture flip)" class="pi-text-input" />
+        <button id="piAddBtn" class="pi-green-btn">+ Add</button>
+      </div>
+    </div>
+
+    <!-- RECURRING form -->
+    <div id="piFormRec" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+        <div>
+          <div class="pi-field-label">Amount</div>
+          <input type="number" id="piRecAmount" placeholder="e.g. 1200" step="0.01" min="0" class="pi-num-input pi-field-input" />
+        </div>
+        <div>
+          <div class="pi-field-label">Day of month</div>
+          <input type="number" id="piRecDay" placeholder="e.g. 1" min="1" max="31" class="pi-num-input pi-field-input" />
+        </div>
+        <div>
+          <div class="pi-field-label">Year</div>
+          <input type="number" id="piRecYear" class="pi-num-input pi-field-input" />
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div>
+          <div class="pi-field-label">Source / description</div>
+          <input type="text" id="piRecDesc" placeholder="e.g. NIL stipend" class="pi-text-input pi-field-input" />
+        </div>
+        <div>
+          <div class="pi-field-label">Bank account</div>
+          <select id="piRecAccount" class="pi-select pi-field-input">
+            <option value="Capital One">Capital One</option>
+            <option value="Truist">Truist</option>
+            <option value="Venmo">Venmo</option>
+            <option value="Roth">Roth</option>
+            <option value="US Bank">US Bank</option>
+          </select>
+        </div>
+      </div>
+      <!-- Month checkboxes -->
+      <div class="pi-field-label" style="margin-bottom:8px">Applies to these months</div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:14px" id="piMonthChecks"></div>
+      <button id="piRecAddBtn" class="pi-green-btn" style="width:100%;padding:13px">+ Add Recurring Stream</button>
     </div>
   </div>
 
-  <!-- Entries list -->
-  <div style="display:flex;justify-content:space-between;align-items:baseline;margin:18px 4px 8px">
-    <span id="piEntriesLabel" style="font-size:10px;letter-spacing:0.18em;font-weight:800;text-transform:uppercase;color:var(--text-tertiary);font-family:var(--font-mono)">ALL ENTRIES</span>
+  <!-- Recurring streams list -->
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin:20px 4px 8px">
+    <span style="font-size:10px;letter-spacing:0.18em;font-weight:800;text-transform:uppercase;color:var(--text-tertiary);font-family:var(--font-mono)">RECURRING STREAMS</span>
+    <span id="piRecCount" style="font-size:11px;color:var(--text-tertiary);font-family:var(--font-mono)"></span>
+  </div>
+  <div id="piRecList"></div>
+  <div id="piRecEmpty" style="text-align:center;padding:20px;background:rgba(255,255,255,0.02);border-radius:12px;border:1px dashed rgba(255,255,255,0.06);margin-bottom:16px;font-size:12px;color:var(--text-tertiary);font-style:italic">No recurring streams yet</div>
+
+  <!-- One-time entries list -->
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin:20px 4px 8px">
+    <span style="font-size:10px;letter-spacing:0.18em;font-weight:800;text-transform:uppercase;color:var(--text-tertiary);font-family:var(--font-mono)">ONE-TIME ENTRIES</span>
     <span id="piCount" style="font-size:11px;color:var(--text-tertiary);font-family:var(--font-mono)">0 entries</span>
   </div>
   <div id="piList"></div>
-  <div id="piEmpty" style="text-align:center;padding:32px 20px;background:rgba(255,255,255,0.025);border-radius:14px;border:1px dashed rgba(255,255,255,0.08)">
-    <div style="font-size:36px;margin-bottom:8px;opacity:0.6">📈</div>
-    <div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:4px">No income logged yet</div>
-    <div style="font-size:12px;color:var(--text-tertiary);line-height:1.5;max-width:320px;margin:0 auto">Log a furniture flip, NIL deal, dividends — anything that comes in passively.</div>
-  </div>
+  <div id="piEmpty" style="text-align:center;padding:20px;background:rgba(255,255,255,0.02);border-radius:12px;border:1px dashed rgba(255,255,255,0.06);font-size:12px;color:var(--text-tertiary);font-style:italic">No one-time entries yet</div>
 </div>
 
 </div>
@@ -3454,146 +3595,360 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   // ============================================================
   // PASSIVE INCOME
   // ============================================================
-  const PI_KEY = 'passive_income';
+  const PI_KEY     = 'passive_income';       // one-time entries
+  const PI_REC_KEY = 'passive_income_rec';   // recurring templates
   const PI_ACCOUNT_COLORS = {
-    'Capital One': '#7DD3FC',
-    'Truist':      '#6EE7B7',
-    'Venmo':       '#B794F4',
-    'Roth':        '#FBBF24',
-    'US Bank':     '#FF8A8A'
+    'Capital One': '#7DD3FC', 'Truist': '#6EE7B7',
+    'Venmo': '#B794F4', 'Roth': '#FBBF24', 'US Bank': '#FF8A8A'
   };
-  let piPeriod = 'all'; // 'all' | 'year' | 'month'
+  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let piViewYear = new Date().getFullYear();
+  let piEntryType = 'once'; // 'once' | 'rec'
 
   function fmtUSD(n) {
     const v = Number(n) || 0;
     return '$' + v.toLocaleString('en-US', { minimumFractionDigits: v % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 });
   }
-  function piYearKey()  { return String(new Date().getFullYear()); }
-  function piMonthKey() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
   function fmtPiDate(iso) {
     if (!iso) return '';
     const d = new Date(iso + 'T00:00');
     if (isNaN(d)) return iso;
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
   }
-  function piFilterEntries(all) {
-    if (piPeriod === 'month') return all.filter(e => (e.date || '').slice(0,7) === piMonthKey());
-    if (piPeriod === 'year')  return all.filter(e => (e.date || '').slice(0,4) === piYearKey());
-    return all;
+  function todayIso() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
-  function piPeriodLabel() {
-    if (piPeriod === 'month') return { main: 'This month', second: 'This year' };
-    if (piPeriod === 'year')  return { main: 'This year',  second: 'All time'  };
-    return                           { main: 'All-time earned', second: 'This month' };
+
+  // Expand recurring templates into virtual entries for a given year
+  function piExpandRec(year) {
+    const recs = storeGet(PI_REC_KEY) || [];
+    const out = [];
+    recs.forEach(r => {
+      if (!r || r.year !== year) return;
+      (r.months || []).forEach(m => {
+        const monthKey = year + '-' + String(m).padStart(2,'0');
+        const overrideAmt = (r.overrides || {})[monthKey];
+        const amount = overrideAmt != null ? overrideAmt : (Number(r.amount) || 0);
+        if (amount === 0 && overrideAmt == null) return; // skip if base amount is 0 with no override
+        const day = Math.min(r.dayOfMonth || 1, new Date(year, m, 0).getDate()); // clamp to month length
+        const date = year + '-' + String(m).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+        out.push({
+          id: 'rec_' + r.id + '_' + monthKey,
+          recId: r.id,
+          date, amount,
+          account: r.account,
+          desc: r.desc,
+          isRecurring: true,
+          isOverride: overrideAmt != null,
+          baseAmount: Number(r.amount) || 0,
+          monthKey
+        });
+      });
+    });
+    return out;
   }
-  function piSecondTotal(all) {
-    if (piPeriod === 'month') return all.filter(e => (e.date||'').slice(0,4) === piYearKey()).reduce((s,e) => s+(Number(e.amount)||0),0);
-    if (piPeriod === 'year')  return all.reduce((s,e) => s+(Number(e.amount)||0),0);
-    return all.filter(e => (e.date||'').slice(0,7) === piMonthKey()).reduce((s,e) => s+(Number(e.amount)||0),0);
+
+  // All effective entries for a year (one-time + expanded recurring)
+  function piAllForYear(year) {
+    const oneTime = (storeGet(PI_KEY) || []).filter(e => (e.date||'').startsWith(String(year)));
+    const recurring = piExpandRec(year);
+    return [...oneTime, ...recurring].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  }
+
+  // Total for a given YYYY-MM key across all sources
+  function piMonthTotal(year, month) {
+    const mk = year + '-' + String(month).padStart(2,'0');
+    const all = piAllForYear(year);
+    return all.filter(e => (e.date||'').startsWith(mk)).reduce((s,e) => s+(Number(e.amount)||0), 0);
   }
 
   function renderPassiveIncome() {
-    const allEntries = (storeGet(PI_KEY) || []).slice().sort((a,b) => (b.date||'').localeCompare(a.date||''));
-    const entries    = piFilterEntries(allEntries);
-    const list = document.getElementById('piList');
-    const empty = document.getElementById('piEmpty');
-    const totalEl  = document.getElementById('piTotal');
-    const monthEl  = document.getElementById('piMonthTotal');
-    const countEl  = document.getElementById('piCount');
-    const acctEl   = document.getElementById('piAccountTotals');
-    const lblMain  = document.getElementById('piTotalLabel');
-    const lblSec   = document.getElementById('piSecondLabel');
-    const lblEntries = document.getElementById('piEntriesLabel');
-    if (!list) return;
+    const nowY = new Date().getFullYear(), nowM = new Date().getMonth()+1;
+    const yearEntries = piAllForYear(nowY);
 
-    // Period button active state
-    ['piPeriodAll','piPeriodYear','piPeriodMonth'].forEach(id => {
-      const btn = document.getElementById(id);
-      if (btn) btn.classList.toggle('pi-period-active', btn.dataset.period === piPeriod);
-    });
+    // Hero: this month + this year
+    const heroMonth = piMonthTotal(nowY, nowM);
+    const heroYear  = yearEntries.reduce((s,e) => s+(Number(e.amount)||0), 0);
+    const hm = document.getElementById('piHeroMonth'), hy = document.getElementById('piHeroYear');
+    if (hm) hm.textContent = fmtUSD(heroMonth);
+    if (hy) hy.textContent = fmtUSD(heroYear);
 
-    const labels = piPeriodLabel();
-    if (lblMain) lblMain.textContent = labels.main;
-    if (lblSec)  lblSec.textContent  = labels.second;
-    if (lblEntries) {
-      const map = { all: 'ALL ENTRIES', year: 'THIS YEAR', month: 'THIS MONTH' };
-      lblEntries.textContent = map[piPeriod] || 'ENTRIES';
-    }
-
-    const periodTotal  = entries.reduce((s,e) => s+(Number(e.amount)||0), 0);
-    const secondTotal  = piSecondTotal(allEntries);
-    if (totalEl) totalEl.textContent = fmtUSD(periodTotal);
-    if (monthEl) monthEl.textContent = fmtUSD(secondTotal);
-    if (countEl) countEl.textContent = entries.length + (entries.length === 1 ? ' entry' : ' entries');
-
-    // Per-account pills (scoped to current filter)
+    // Per-account pills for current year
+    const acctEl = document.getElementById('piAccountTotals');
     if (acctEl) {
       const byAcct = {};
-      entries.forEach(e => { byAcct[e.account] = (byAcct[e.account]||0)+(Number(e.amount)||0); });
+      yearEntries.forEach(e => { byAcct[e.account] = (byAcct[e.account]||0)+(Number(e.amount)||0); });
       acctEl.innerHTML = Object.entries(byAcct).filter(([,v]) => v > 0).map(([name,val]) => {
         const color = PI_ACCOUNT_COLORS[name] || '#FFFFFF';
-        return '<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:999px;font-size:11px;font-family:var(--font-mono);font-weight:700;color:'+color+'">'
-          + '<span style="width:6px;height:6px;border-radius:50%;background:'+color+';box-shadow:0 0 6px '+color+'"></span>'
-          + escapeHtml(name)+' · '+fmtUSD(val)+'</span>';
+        return '<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:999px;font-size:11px;font-family:var(--font-mono);font-weight:700;color:'+color+'">'
+          +'<span style="width:6px;height:6px;border-radius:50%;background:'+color+';box-shadow:0 0 5px '+color+'"></span>'
+          +escapeHtml(name)+' · '+fmtUSD(val)+'</span>';
       }).join('');
     }
 
-    if (!entries.length) {
-      list.innerHTML = '';
-      if (empty) empty.style.display = '';
-      return;
+    // Year label
+    const yl = document.getElementById('piYearLabel');
+    if (yl) yl.textContent = piViewYear;
+
+    // Calendar rows
+    renderPiCalendar();
+
+    // Recurring streams list
+    renderPiRecList();
+
+    // One-time entries list
+    renderPiOneTimeList();
+  }
+
+  function renderPiCalendar() {
+    const cal = document.getElementById('piCalendar');
+    if (!cal) return;
+    const nowY = new Date().getFullYear(), nowM = new Date().getMonth()+1;
+    const viewEntries = piAllForYear(piViewYear);
+    const recs = storeGet(PI_REC_KEY) || [];
+
+    cal.innerHTML = '';
+    for (let m = 1; m <= 12; m++) {
+      const mk = piViewYear + '-' + String(m).padStart(2,'0');
+      const monthEntries = viewEntries.filter(e => (e.date||'').startsWith(mk));
+      const total = monthEntries.reduce((s,e) => s+(Number(e.amount)||0), 0);
+      const isCurrent = piViewYear === nowY && m === nowM;
+      const hasOverride = monthEntries.some(e => e.isOverride);
+      const isPast = piViewYear < nowY || (piViewYear === nowY && m < nowM);
+      const isFuture = piViewYear > nowY || (piViewYear === nowY && m > nowM);
+
+      const row = document.createElement('div');
+      row.className = 'pi-cal-row' + (isCurrent ? ' is-current' : '') + (hasOverride ? ' has-override' : '');
+
+      // Month label
+      const monthDiv = document.createElement('div');
+      monthDiv.innerHTML = '<div class="pi-cal-month'+(isCurrent?' cur':'')+'">'+MONTH_NAMES[m-1]+' '+piViewYear+'</div>'
+        +(isCurrent ? '<div style="font-size:9px;color:#6BE3A4;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-top:2px">NOW</div>' : '')
+        +(isPast && total === 0 ? '<div style="font-size:9px;color:var(--text-quaternary);letter-spacing:0.04em;text-transform:uppercase;margin-top:2px">—</div>' : '')
+        +(isFuture && total > 0 ? '<div style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;text-transform:uppercase;margin-top:2px">expected</div>' : '');
+
+      // Sources pills + override badge
+      const sourcesDiv = document.createElement('div');
+      sourcesDiv.className = 'pi-cal-sources';
+      if (monthEntries.length) {
+        monthEntries.forEach(e => {
+          const color = PI_ACCOUNT_COLORS[e.account] || '#FFFFFF';
+          const pill = document.createElement('span');
+          pill.className = 'pi-cal-pill';
+          pill.style.cssText = 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:'+color;
+          pill.textContent = (e.desc || e.account);
+          if (e.isOverride) pill.title = 'Override: was '+fmtUSD(e.baseAmount);
+          sourcesDiv.appendChild(pill);
+          if (e.isOverride) {
+            const badge = document.createElement('span');
+            badge.className = 'pi-cal-override-badge';
+            badge.title = 'Differs from usual '+fmtUSD(e.baseAmount);
+            badge.textContent = '≠ usual';
+            sourcesDiv.appendChild(badge);
+          }
+        });
+      } else {
+        sourcesDiv.innerHTML = '<span style="font-size:11px;color:var(--text-quaternary);font-style:italic">nothing scheduled</span>';
+      }
+
+      // Total + override edit button (only for months with recurring entries)
+      const totalDiv = document.createElement('div');
+      totalDiv.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;gap:6px';
+      const totalSpan = document.createElement('div');
+      totalSpan.className = 'pi-cal-total' + (total > 0 ? ' has-income' : '');
+      totalSpan.textContent = total > 0 ? fmtUSD(total) : '—';
+      totalDiv.appendChild(totalSpan);
+
+      // Override button for recurring entries in this month
+      const recInMonth = monthEntries.filter(e => e.isRecurring);
+      if (recInMonth.length) {
+        const overrideBtn = document.createElement('button');
+        overrideBtn.textContent = hasOverride ? '✎ override' : '+ override';
+        overrideBtn.style.cssText = 'background:transparent;border:1px solid rgba(255,255,255,0.10);color:var(--text-tertiary);font-family:inherit;font-size:10px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;padding:3px 8px;border-radius:6px;cursor:pointer;';
+        if (hasOverride) { overrideBtn.style.color='#F2C063'; overrideBtn.style.borderColor='rgba(242,192,99,0.30)'; }
+        overrideBtn.addEventListener('click', () => openOverrideEditor(row, recInMonth, mk, overrideBtn));
+        totalDiv.appendChild(overrideBtn);
+      }
+
+      row.appendChild(monthDiv);
+      row.appendChild(sourcesDiv);
+      row.appendChild(totalDiv);
+      cal.appendChild(row);
     }
+  }
+
+  function openOverrideEditor(rowEl, recEntries, monthKey, triggerBtn) {
+    // Toggle: if already open, close
+    const existing = rowEl.querySelector('.pi-override-editor');
+    if (existing) { existing.remove(); return; }
+    const editor = document.createElement('div');
+    editor.className = 'pi-override-editor';
+    editor.style.cssText = 'grid-column:1/-1;padding:10px 12px;background:rgba(242,192,99,0.06);border:1px solid rgba(242,192,99,0.20);border-radius:8px;margin-top:6px;display:flex;flex-wrap:wrap;gap:8px;align-items:center';
+    rowEl.style.flexWrap = 'wrap';
+    rowEl.style.display = 'flex';
+
+    recEntries.forEach(e => {
+      const recs = storeGet(PI_REC_KEY) || [];
+      const rec = recs.find(r => r.id === e.recId);
+      if (!rec) return;
+      const curOverride = (rec.overrides || {})[monthKey];
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;align-items:center;gap:8px;flex-wrap:wrap';
+      wrap.innerHTML = '<span style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono)">'
+        +escapeHtml(e.desc||rec.desc||'Recurring')+' (usual: '+fmtUSD(rec.amount)+')</span>';
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.step = '0.01'; inp.min = '0';
+      inp.className = 'pi-override-input';
+      inp.placeholder = 'Override amount';
+      if (curOverride != null) inp.value = curOverride;
+      const saveBtn = document.createElement('button');
+      saveBtn.textContent = 'Save'; saveBtn.style.cssText = 'padding:5px 12px;background:rgba(242,192,99,0.15);border:1px solid rgba(242,192,99,0.35);color:#F2C063;border-radius:7px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer';
+      const clearBtn = document.createElement('button');
+      clearBtn.textContent = 'Clear'; clearBtn.style.cssText = 'padding:5px 10px;background:transparent;border:1px solid rgba(255,255,255,0.10);color:var(--text-tertiary);border-radius:7px;font-family:inherit;font-size:11px;cursor:pointer';
+      saveBtn.addEventListener('click', () => {
+        const v = parseFloat(inp.value);
+        const allRecs = storeGet(PI_REC_KEY) || [];
+        const ri = allRecs.findIndex(r => r.id === e.recId);
+        if (ri < 0) return;
+        allRecs[ri].overrides = allRecs[ri].overrides || {};
+        if (!isNaN(v) && v >= 0) allRecs[ri].overrides[monthKey] = v;
+        storeSet(PI_REC_KEY, allRecs);
+        editor.remove();
+        renderPassiveIncome();
+      });
+      clearBtn.addEventListener('click', () => {
+        const allRecs = storeGet(PI_REC_KEY) || [];
+        const ri = allRecs.findIndex(r => r.id === e.recId);
+        if (ri >= 0 && allRecs[ri].overrides) {
+          delete allRecs[ri].overrides[monthKey];
+          storeSet(PI_REC_KEY, allRecs);
+        }
+        editor.remove();
+        renderPassiveIncome();
+      });
+      inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') saveBtn.click(); if (ev.key === 'Escape') editor.remove(); });
+      wrap.appendChild(inp); wrap.appendChild(saveBtn); wrap.appendChild(clearBtn);
+      editor.appendChild(wrap);
+    });
+
+    rowEl.appendChild(editor);
+  }
+
+  function renderPiRecList() {
+    const list = document.getElementById('piRecList');
+    const empty = document.getElementById('piRecEmpty');
+    const count = document.getElementById('piRecCount');
+    if (!list) return;
+    const recs = storeGet(PI_REC_KEY) || [];
+    if (count) count.textContent = recs.length ? recs.length + ' stream' + (recs.length===1?'':'s') : '';
+    if (!recs.length) { list.innerHTML = ''; if (empty) empty.style.display=''; return; }
     if (empty) empty.style.display = 'none';
-
-    list.innerHTML = entries.map((e, i) => {
-      const color = PI_ACCOUNT_COLORS[e.account] || '#6EE7B7';
-      return '<div style="display:grid;grid-template-columns:4px 1fr auto auto;gap:12px;align-items:center;padding:13px 16px;background:rgba(255,255,255,0.025);border-radius:12px;margin-bottom:8px;transition:background 0.15s" onmouseover="this.style.background=\'rgba(255,255,255,0.045)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.025)\'">'
-        + '<span style="width:4px;height:32px;border-radius:2px;background:'+color+';box-shadow:0 0 8px '+color+';flex-shrink:0"></span>'
-        + '<div style="min-width:0">'
-        +   '<div style="font-size:14px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(e.desc||'(no description)')+'</div>'
-        +   '<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;font-family:var(--font-mono);display:flex;gap:8px;flex-wrap:wrap">'
-        +     '<span style="color:'+color+';font-weight:700">'+escapeHtml(e.account)+'</span>'
-        +     '<span>· '+fmtPiDate(e.date)+'</span>'
-        +   '</div>'
-        + '</div>'
-        + '<div style="font-size:18px;font-weight:700;color:#6BE3A4;font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap">'+fmtUSD(e.amount)+'</div>'
-        + '<button data-pi-del="'+e.id+'" style="background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--text-tertiary);cursor:pointer;font-size:14px;padding:5px 9px;border-radius:6px;font-family:inherit;line-height:1" title="Delete">×</button>'
-        + '</div>';
+    list.innerHTML = recs.map((r,i) => {
+      const color = PI_ACCOUNT_COLORS[r.account] || '#FFFFFF';
+      const mNames = (r.months||[]).map(m => MONTH_NAMES[m-1]).join(', ');
+      return '<div style="display:grid;grid-template-columns:4px 1fr auto auto;gap:12px;align-items:center;padding:13px 16px;background:rgba(255,255,255,0.025);border-radius:12px;margin-bottom:8px">'
+        +'<span style="width:4px;height:36px;border-radius:2px;background:'+color+';box-shadow:0 0 8px '+color+';flex-shrink:0"></span>'
+        +'<div style="min-width:0">'
+        +  '<div style="font-size:14px;font-weight:600;color:var(--text-primary)">'+escapeHtml(r.desc||'(unnamed)')+'</div>'
+        +  '<div style="font-size:11px;color:var(--text-tertiary);margin-top:3px;font-family:var(--font-mono);display:flex;flex-wrap:wrap;gap:8px">'
+        +    '<span style="color:'+color+';font-weight:700">'+escapeHtml(r.account)+'</span>'
+        +    '<span>· day '+r.dayOfMonth+' of month</span>'
+        +    '<span>· '+r.year+'</span>'
+        +  '</div>'
+        +  '<div style="font-size:10px;color:var(--text-tertiary);margin-top:3px">'+escapeHtml(mNames)+'</div>'
+        +'</div>'
+        +'<div style="font-size:18px;font-weight:700;color:#6BE3A4;font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap">'+fmtUSD(r.amount)+'<span style="font-size:10px;color:var(--text-tertiary);font-weight:500">/mo</span></div>'
+        +'<button data-pi-rec-del="'+i+'" style="background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--text-tertiary);cursor:pointer;font-size:14px;padding:5px 9px;border-radius:6px;font-family:inherit;line-height:1" title="Delete">×</button>'
+        +'</div>';
     }).join('');
-
-    list.querySelectorAll('[data-pi-del]').forEach(b => {
+    list.querySelectorAll('[data-pi-rec-del]').forEach(b => {
       b.addEventListener('click', () => {
-        const id = b.dataset.piDel;
-        const all = storeGet(PI_KEY) || [];
-        const entry = all.find(x => x.id === id);
-        if (!entry || !confirm('Delete "' + (entry.desc || 'this entry') + '"?')) return;
-        const idx = all.indexOf(entry);
-        if (idx >= 0) { all.splice(idx, 1); storeSet(PI_KEY, all); }
+        const i = parseInt(b.dataset.piRecDel, 10);
+        const arr = storeGet(PI_REC_KEY) || [];
+        if (!confirm('Delete recurring stream "' + (arr[i] && arr[i].desc || 'this stream') + '"?')) return;
+        arr.splice(i, 1); storeSet(PI_REC_KEY, arr);
         renderPassiveIncome();
       });
     });
   }
 
-  // Period button clicks
-  ['piPeriodAll','piPeriodYear','piPeriodMonth'].forEach(id => {
-    const btn = document.getElementById(id);
-    if (btn) btn.addEventListener('click', () => { piPeriod = btn.dataset.period; renderPassiveIncome(); });
-  });
+  function renderPiOneTimeList() {
+    const list = document.getElementById('piList');
+    const empty = document.getElementById('piEmpty');
+    const count = document.getElementById('piCount');
+    if (!list) return;
+    const entries = (storeGet(PI_KEY) || []).slice().sort((a,b) => (b.date||'').localeCompare(a.date||''));
+    if (count) count.textContent = entries.length + (entries.length===1?' entry':' entries');
+    if (!entries.length) { list.innerHTML = ''; if (empty) empty.style.display=''; return; }
+    if (empty) empty.style.display = 'none';
+    list.innerHTML = entries.map(e => {
+      const color = PI_ACCOUNT_COLORS[e.account] || '#6EE7B7';
+      return '<div style="display:grid;grid-template-columns:4px 1fr auto auto;gap:12px;align-items:center;padding:13px 16px;background:rgba(255,255,255,0.025);border-radius:12px;margin-bottom:8px;transition:background 0.15s" onmouseover="this.style.background=\'rgba(255,255,255,0.045)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.025)\'">'
+        +'<span style="width:4px;height:32px;border-radius:2px;background:'+color+';box-shadow:0 0 8px '+color+';flex-shrink:0"></span>'
+        +'<div style="min-width:0">'
+        +  '<div style="font-size:14px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(e.desc||'(no description)')+'</div>'
+        +  '<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;font-family:var(--font-mono);display:flex;gap:8px;flex-wrap:wrap">'
+        +    '<span style="color:'+color+';font-weight:700">'+escapeHtml(e.account)+'</span>'
+        +    '<span>· '+fmtPiDate(e.date)+'</span>'
+        +  '</div>'
+        +'</div>'
+        +'<div style="font-size:18px;font-weight:700;color:#6BE3A4;font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap">'+fmtUSD(e.amount)+'</div>'
+        +'<button data-pi-del="'+e.id+'" style="background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--text-tertiary);cursor:pointer;font-size:14px;padding:5px 9px;border-radius:6px;font-family:inherit;line-height:1" title="Delete">×</button>'
+        +'</div>';
+    }).join('');
+    list.querySelectorAll('[data-pi-del]').forEach(b => {
+      b.addEventListener('click', () => {
+        const id = b.dataset.piDel;
+        const all = storeGet(PI_KEY) || [];
+        const idx = all.findIndex(x => x.id === id);
+        if (idx < 0) return;
+        if (!confirm('Delete "' + (all[idx].desc || 'this entry') + '"?')) return;
+        all.splice(idx, 1); storeSet(PI_KEY, all);
+        renderPassiveIncome();
+      });
+    });
+  }
 
+  // Year navigator
+  document.getElementById('piYearPrev').addEventListener('click', () => { piViewYear--; renderPassiveIncome(); });
+  document.getElementById('piYearNext').addEventListener('click', () => { piViewYear++; renderPassiveIncome(); });
+
+  // Entry type toggle
+  function setPiType(t) {
+    piEntryType = t;
+    document.getElementById('piTypeOnce').classList.toggle('pi-period-active', t==='once');
+    document.getElementById('piTypeRec').classList.toggle('pi-period-active', t==='rec');
+    document.getElementById('piFormOnce').style.display = t==='once' ? '' : 'none';
+    document.getElementById('piFormRec').style.display  = t==='rec'  ? '' : 'none';
+  }
+  document.getElementById('piTypeOnce').addEventListener('click', () => setPiType('once'));
+  document.getElementById('piTypeRec').addEventListener('click',  () => setPiType('rec'));
+
+  // Build month checkboxes
+  (function() {
+    const container = document.getElementById('piMonthChecks');
+    if (!container) return;
+    MONTH_NAMES.forEach((name, i) => {
+      const m = i + 1;
+      const label = document.createElement('label');
+      label.className = 'pi-month-check';
+      label.dataset.month = m;
+      label.innerHTML = '<input type="checkbox" value="'+m+'" />'
+        +'<span class="pi-month-check-dot"></span>'
+        +'<span class="pi-month-check-label">'+name+'</span>';
+      label.querySelector('input').addEventListener('change', () => label.classList.toggle('checked', label.querySelector('input').checked));
+      container.appendChild(label);
+    });
+  })();
+
+  // One-time add
   function doPiAdd() {
-    const dateEl  = document.getElementById('piDate');
-    const acctEl  = document.getElementById('piAccount');
-    const amtEl   = document.getElementById('piAmount');
-    const descEl  = document.getElementById('piDesc');
-    const date    = dateEl && dateEl.value;
-    const account = acctEl && acctEl.value;
-    const amount  = parseFloat(amtEl && amtEl.value);
-    const desc    = (descEl && descEl.value.trim()) || '';
-    if (!date || !account || isNaN(amount) || amount <= 0) {
-      if (!date && dateEl) dateEl.focus();
-      else amtEl && amtEl.focus();
-      return;
-    }
+    const dateEl = document.getElementById('piDate'), acctEl = document.getElementById('piAccount');
+    const amtEl  = document.getElementById('piAmount'), descEl = document.getElementById('piDesc');
+    const date = dateEl && dateEl.value, account = acctEl && acctEl.value;
+    const amount = parseFloat(amtEl && amtEl.value), desc = (descEl && descEl.value.trim()) || '';
+    if (!date || !account || isNaN(amount) || amount <= 0) { (!date && dateEl ? dateEl : amtEl) && (!date && dateEl ? dateEl : amtEl).focus(); return; }
     const entries = storeGet(PI_KEY) || [];
     entries.push({ id: 'pi_' + Date.now(), date, account, amount, desc });
     storeSet(PI_KEY, entries);
@@ -3602,19 +3957,35 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     renderPassiveIncome();
   }
 
-  // Default date to today
-  (function() {
-    const d = new Date();
-    const iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-    const el = document.getElementById('piDate');
-    if (el) el.value = iso;
-  })();
+  // Recurring add
+  function doPiRecAdd() {
+    const amount  = parseFloat(document.getElementById('piRecAmount').value);
+    const day     = parseInt(document.getElementById('piRecDay').value, 10);
+    const year    = parseInt(document.getElementById('piRecYear').value, 10) || new Date().getFullYear();
+    const desc    = document.getElementById('piRecDesc').value.trim();
+    const account = document.getElementById('piRecAccount').value;
+    const months  = [...document.querySelectorAll('#piMonthChecks input:checked')].map(c => parseInt(c.value, 10));
+    if (isNaN(amount) || amount <= 0) { document.getElementById('piRecAmount').focus(); return; }
+    if (isNaN(day) || day < 1 || day > 31) { document.getElementById('piRecDay').focus(); return; }
+    if (!months.length) { alert('Select at least one month.'); return; }
+    const recs = storeGet(PI_REC_KEY) || [];
+    recs.push({ id: 'rec_' + Date.now(), amount, dayOfMonth: day, year, desc, account, months, overrides: {} });
+    storeSet(PI_REC_KEY, recs);
+    document.getElementById('piRecAmount').value = '';
+    document.getElementById('piRecDay').value = '';
+    document.getElementById('piRecDesc').value = '';
+    document.querySelectorAll('#piMonthChecks input:checked').forEach(c => { c.checked = false; c.closest('label').classList.remove('checked'); });
+    renderPassiveIncome();
+  }
 
+  // Wire up add buttons + Enter keys
+  document.getElementById('piDate').value = todayIso();
+  document.getElementById('piRecYear').value = new Date().getFullYear();
   document.getElementById('piAddBtn').addEventListener('click', doPiAdd);
-  ['piAmount','piDesc'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') doPiAdd(); });
-  });
+  document.getElementById('piRecAddBtn').addEventListener('click', doPiRecAdd);
+  ['piAmount','piDesc'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('keydown', e => { if (e.key==='Enter') doPiAdd(); }); });
+  ['piRecAmount','piRecDay','piRecDesc'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('keydown', e => { if (e.key==='Enter') doPiRecAdd(); }); });
+
   renderPassiveIncome();
 
 })();
