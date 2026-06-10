@@ -226,6 +226,7 @@ main {
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="topbar.js" defer></script>
 </head>
 <body>
@@ -299,7 +300,15 @@ main {
   'use strict';
 
   const storeGet = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
-  const storeSet = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+  const _SB_URL = 'https://onggaqxuriybodtyavsd.supabase.co';
+  const _SB_KEY = 'sb_publishable__D6jwlREF6WQiFeFZe6j1A_0N59qzPr';
+  const _db = supabase.createClient(_SB_URL, _SB_KEY);
+  const storeSet = (k, v) => {
+    localStorage.setItem(k, JSON.stringify(v));
+    if (k.startsWith('stack:')) {
+      try { _db.from('app_state').upsert({key: k, data: v, updated_at: new Date().toISOString()}, {onConflict:'key'}); } catch(e) {}
+    }
+  };
 
   function getActiveDate() {
     const now = new Date();
@@ -545,6 +554,25 @@ main {
   });
 
   setInterval(() => { const nk=`stack:taken:${getActiveDate()}`; if(nk!==todayKey) todayKey=nk; render(); }, 60000);
+
+  // Pull all stack data from Supabase on load; re-render if anything changed.
+  (async () => {
+    try {
+      const { data } = await _db.from('app_state').select('key, data').like('key', 'stack:%');
+      if (!data || !data.length) return;
+      let changed = false;
+      data.forEach(row => {
+        if (row.data == null) return;
+        const serialized = JSON.stringify(row.data);
+        if (localStorage.getItem(row.key) !== serialized) {
+          localStorage.setItem(row.key, serialized);
+          changed = true;
+        }
+      });
+      if (changed) render();
+    } catch(e) {}
+  })();
+
   render();
   startTicker();
 })();

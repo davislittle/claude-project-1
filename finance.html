@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#0a0a0b">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Finances</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="topbar.js" defer></script>
 <style>
 :root {
@@ -2117,15 +2118,29 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 (function() {
 
   // ============================================================
-  // STORAGE — localStorage shim. Same interface as the dashboard's
-  // storeGet/storeSet so the existing render code drops straight in.
+  // STORAGE + SUPABASE SYNC
   // ============================================================
   function storeGet(key) {
     try { const raw = localStorage.getItem(key); return raw == null ? null : JSON.parse(raw); }
     catch (e) { return null; }
   }
+
+  const _SB_URL  = 'https://onggaqxuriybodtyavsd.supabase.co';
+  const _SB_KEY  = 'sb_publishable__D6jwlREF6WQiFeFZe6j1A_0N59qzPr';
+  const _db      = supabase.createClient(_SB_URL, _SB_KEY);
+  const FINANCE_SYNC_KEYS = [
+    'nw:bank','nw:stocks','nw:crypto','nw:other',
+    'nw:history','nw:activity','nw_currency',
+    'subs','orders','wishlist',
+    'passive_income','passive_income_rec'
+  ];
+  function sbPush(key, val) {
+    try { _db.from('app_state').upsert({key, data: val, updated_at: new Date().toISOString()}, {onConflict:'key'}); } catch(e) {}
+  }
+
   function storeSet(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+    if (FINANCE_SYNC_KEYS.includes(key)) sbPush(key, value);
   }
 
   // ============================================================
@@ -4033,6 +4048,28 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   ['piRecAmount','piRecDay','piRecDesc'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('keydown', e => { if (e.key==='Enter') doPiRecAdd(); }); });
 
   renderPassiveIncome();
+
+  // Pull all finance data from Supabase on load; re-render any section whose data changed.
+  (async () => {
+    try {
+      const { data } = await _db.from('app_state').select('key, data').in('key', FINANCE_SYNC_KEYS);
+      if (!data || !data.length) return;
+      let changed = false;
+      data.forEach(row => {
+        if (row.data == null) return;
+        const serialized = JSON.stringify(row.data);
+        if (localStorage.getItem(row.key) !== serialized) {
+          localStorage.setItem(row.key, serialized);
+          changed = true;
+        }
+      });
+      if (changed) {
+        renderAllNetWorth();
+        if (typeof renderSubs         === 'function') renderSubs();
+        if (typeof renderPassiveIncome === 'function') renderPassiveIncome();
+      }
+    } catch(e) {}
+  })();
 
 })();
 </script>
