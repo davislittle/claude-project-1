@@ -440,6 +440,18 @@ img, video, canvas, svg { max-width: 100%; }
   .wt-compare-meta-line { font-size: 11px; }
   .wt-photo-grid { gap: 8px; }
 }
+/* ── Today's logged sets ───────────────────────────────────── */
+.po-today-sets { margin-bottom: 14px; }
+.po-today-set-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: rgba(110,231,183,0.06); border: 1px solid rgba(110,231,183,0.14); border-radius: 8px; margin-bottom: 5px; }
+.po-today-set-row:last-child { margin-bottom: 0; }
+.po-today-set-num { font-size: 10px; font-weight: 700; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; font-family: var(--font-mono); min-width: 38px; }
+.po-today-set-val { flex: 1; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ── History set chips ─────────────────────────────────────── */
+.po-hist-sets { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; align-items: center; }
+.po-hist-set-chip { font-size: 11px; font-weight: 600; padding: 3px 7px; background: rgba(255,255,255,0.04); border-radius: 5px; font-variant-numeric: tabular-nums; color: var(--text-2); }
+.po-hist-set-chip.best { background: rgba(110,231,183,0.12); color: var(--good); }
+
 .hidden { display: none !important; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -625,12 +637,15 @@ img, video, canvas, svg { max-width: 100%; }
       <div class="po-no-ex" id="noExMsg" style="display:none">No exercises here yet. Tap <strong>+</strong> to add one.</div>
     </div>
     <div class="po-sub-section">
-      <div class="po-sub-title">Log today's top set</div>
+      <div class="po-sub-title">Log sets</div>
       <div class="po-bw-banner" id="bwBanner">Bodyweight — log reps only</div>
       <div class="po-last-set" id="lastSet">
-        <span class="po-last-label">Last time</span>
+        <span class="po-last-label">Last session</span>
         <span class="po-last-value" id="lastSetValue"></span>
         <span class="po-last-meta" id="lastSetMeta"></span>
+      </div>
+      <div class="po-today-sets" id="todaySetsWrap" style="display:none">
+        <div id="todaySetsBody"></div>
       </div>
       <div class="po-log-grid" id="logGrid">
         <div class="po-field" id="weightField">
@@ -840,14 +855,28 @@ img, video, canvas, svg { max-width: 100%; }
   }
   function getLogs() { return (state.logs[state.currentEx]||[]).slice(); }
 
+  // Group log entries by calendar date, returning [{date, sets}] sorted oldest→newest.
+  function getSessionGroups(logs) {
+    const byDate = {};
+    logs.forEach(l => { const dk=l.date.slice(0,10); if(!byDate[dk]) byDate[dk]=[]; byDate[dk].push(l); });
+    return Object.entries(byDate).sort((a,b)=>a[0].localeCompare(b[0])).map(([date,sets])=>({date,sets}));
+  }
+  // Return the highest-quality set from a session (most reps for BW, best est-1RM otherwise).
+  function getBestSet(sets, ex) {
+    if(!sets||!sets.length) return sets[0];
+    return sets.reduce((b,s)=>(ex.bw?s.reps>b.reps:estimate1RM(s.weight,s.reps)>estimate1RM(b.weight,b.reps))?s:b);
+  }
+
   function getRx(ex, logs) {
     if(!logs.length) return null;
-    const last = logs[logs.length-1];
+    const sessions = getSessionGroups(logs);
+    const lastSession = sessions[sessions.length-1];
+    const last = getBestSet(lastSession.sets, ex);
     const {weight,reps} = last;
     const {repMin,repMax,step,bw} = ex;
     const upgradeAt = Math.min(CONFIG.upgradeAtReps||8, repMax);
     let stuck = 0;
-    for(let i=logs.length-1;i>=0;i--) { if(logs[i].weight===weight) stuck++; else break; }
+    for(let i=sessions.length-1;i>=0;i--) { if(getBestSet(sessions[i].sets,ex).weight===weight) stuck++; else break; }
     if(bw) {
       if(reps>=upgradeAt) return {type:'up',weight:0,reps:reps+1,tag:'Push for more',reason:reps+' reps — strong. Push for '+(reps+1)+' next time.',bw:true};
       if(reps>=repMin)    return {type:'hold',weight:0,reps:reps+1,tag:'Add a rep',reason:reps+' reps. Push for '+(reps+1)+' next session.',bw:true};
@@ -896,11 +925,15 @@ img, video, canvas, svg { max-width: 100%; }
   function renderLastSet() {
     const wrap=$('lastSet'), v=$('lastSetValue'), m=$('lastSetMeta'), ex=getCurrentEx(), logs=ex?getLogs():[];
     if(!ex||!logs.length) { wrap.classList.remove('show'); return; }
-    const last=logs[logs.length-1];
-    const setStr=ex.bw?(last.reps+' reps'):(last.weight+unit()+' × '+last.reps);
-    const d=new Date(last.date), da=Math.floor((Date.now()-d.getTime())/86400000);
-    const ago=da===0?'today':da===1?'yesterday':da+' days ago';
-    v.textContent=setStr; m.textContent=ago; wrap.classList.add('show');
+    const todayKey=new Date().toISOString().slice(0,10);
+    const prevSessions=getSessionGroups(logs).filter(s=>s.date<todayKey);
+    if(!prevSessions.length) { wrap.classList.remove('show'); return; }
+    const lastSession=prevSessions[prevSessions.length-1];
+    const best=getBestSet(lastSession.sets, ex);
+    const setStr=ex.bw?(best.reps+' reps'):(best.weight+unit()+' × '+best.reps);
+    const da=Math.round((Date.now()-new Date(lastSession.date+'T12:00').getTime())/86400000);
+    const ago=da<=1?'yesterday':da+' days ago';
+    v.textContent=setStr+' (best)'; m.textContent=ago; wrap.classList.add('show');
   }
   function renderRx() {
     const wrap=$('rxWrap'), ex=getCurrentEx();
@@ -919,18 +952,21 @@ img, video, canvas, svg { max-width: 100%; }
   function renderStats() {
     const ex=getCurrentEx(), logs=ex?getLogs():[];
     if(!logs.length) { $('oneRm').innerHTML='—<span class="po-unit">'+unit()+'</span>'; $('bestSet').textContent='—'; $('sessionCount').textContent='—'; return; }
-    if(ex.bw) { const br=Math.max.apply(null,logs.map(l=>l.reps)); $('oneRm').innerHTML=br+'<span class="po-unit">reps</span>'; }
-    else { const orm=Math.max.apply(null,logs.map(l=>estimate1RM(l.weight,l.reps))); $('oneRm').innerHTML=Math.round(orm)+'<span class="po-unit">'+unit()+'</span>'; }
-    let best=logs[0];
-    logs.forEach(l => { const cur=ex.bw?l.reps:estimate1RM(l.weight,l.reps), bestVal=ex.bw?best.reps:estimate1RM(best.weight,best.reps); if(cur>bestVal) best=l; });
-    $('bestSet').textContent=ex.bw?(best.reps+'r'):(best.weight+'×'+best.reps);
-    $('sessionCount').textContent=logs.length;
+    const sessions=getSessionGroups(logs);
+    const bestSets=sessions.map(s=>getBestSet(s.sets,ex));
+    if(ex.bw) { const br=Math.max.apply(null,bestSets.map(s=>s.reps)); $('oneRm').innerHTML=br+'<span class="po-unit">reps</span>'; }
+    else { const orm=Math.max.apply(null,bestSets.map(s=>estimate1RM(s.weight,s.reps))); $('oneRm').innerHTML=Math.round(orm)+'<span class="po-unit">'+unit()+'</span>'; }
+    const overallBest=bestSets.reduce((b,s)=>(ex.bw?s.reps>b.reps:estimate1RM(s.weight,s.reps)>estimate1RM(b.weight,b.reps))?s:b);
+    $('bestSet').textContent=ex.bw?(overallBest.reps+'r'):(overallBest.weight+'×'+overallBest.reps);
+    $('sessionCount').textContent=sessions.length;
   }
   function renderSparkline() {
-    const svg=$('sparkline'), empty=$('sparkEmpty'), ex=getCurrentEx(), logs=ex?getLogs().slice(-10):[];
-    if(logs.length<2) { svg.style.display='none'; empty.style.display='block'; return; }
+    const svg=$('sparkline'), empty=$('sparkEmpty'), ex=getCurrentEx();
+    if(!ex) { svg.style.display='none'; empty.style.display='block'; return; }
+    const sessions=getSessionGroups(getLogs()).slice(-10);
+    if(sessions.length<2) { svg.style.display='none'; empty.style.display='block'; return; }
     svg.style.display='block'; empty.style.display='none';
-    const vals=logs.map(l=>ex.bw?l.reps:estimate1RM(l.weight,l.reps));
+    const vals=sessions.map(s=>{const b=getBestSet(s.sets,ex); return ex.bw?b.reps:estimate1RM(b.weight,b.reps);});
     const min=Math.min.apply(null,vals), max=Math.max.apply(null,vals), range=max-min||1;
     const W=300,H=60,pad=4;
     const pts=vals.map((v,i)=>({ x:pad+(W-pad*2)*(i/(vals.length-1)), y:H-pad-(H-pad*2)*((v-min)/range) }));
@@ -940,21 +976,51 @@ img, video, canvas, svg { max-width: 100%; }
     svg.innerHTML=defsHTML+'<path class="po-spark-fill" d="'+fillPath+'"/>'+'<path class="po-spark-line" d="'+linePath+'"/>';
   }
   function renderHistory() {
-    const wrap=$('historyCard'), ex=getCurrentEx(), logs=ex?getLogs().slice().reverse():[];
-    if(!logs.length) { wrap.innerHTML='<div class="po-empty">No logs yet.</div>'; return; }
-    wrap.innerHTML=logs.slice(0,12).map((l,i)=>{
-      const d=new Date(l.date), dStr=(d.getMonth()+1)+'/'+d.getDate();
-      const setStr=ex.bw?(l.reps+' reps'):(l.weight+unit()+' × '+l.reps);
-      const realIdx=logs.length-1-i;
-      return '<div class="po-hist-row"><div class="po-hist-date">'+dStr+'</div><div class="po-hist-set">'+setStr+'</div><button class="po-hist-del" data-idx="'+realIdx+'" aria-label="Delete">×</button></div>';
+    const wrap=$('historyCard'), ex=getCurrentEx();
+    if(!ex) { wrap.innerHTML='<div class="po-empty">No logs yet.</div>'; return; }
+    const sessions=getSessionGroups(getLogs()).reverse().slice(0,12);
+    if(!sessions.length) { wrap.innerHTML='<div class="po-empty">No logs yet.</div>'; return; }
+    wrap.innerHTML=sessions.map(session=>{
+      const dt=new Date(session.date+'T12:00'), dStr=(dt.getMonth()+1)+'/'+dt.getDate();
+      const best=getBestSet(session.sets,ex);
+      const chips=session.sets.map(s=>{
+        const isBest=s===best;
+        const lbl=ex.bw?(s.reps+' reps'):(s.weight+unit()+'×'+s.reps);
+        return '<span class="po-hist-set-chip'+(isBest?' best':'')+'">' + lbl + '</span>';
+      }).join('');
+      return '<div class="po-hist-row"><div class="po-hist-date">'+dStr+'</div><div class="po-hist-sets">'+chips+'</div><button class="po-hist-del" data-date="'+session.date+'" aria-label="Delete day">×</button></div>';
     }).join('');
-    wrap.querySelectorAll('.po-hist-del').forEach(b => {
-      b.addEventListener('click', () => {
-        if(!confirm('Delete this log?')) return;
-        const realIdx=parseInt(b.dataset.idx,10), arr=state.logs[state.currentEx]||[];
-        const origIdx=arr.length-1-realIdx;
-        arr.splice(origIdx,1);
-        if(!arr.length) delete state.logs[state.currentEx]; else state.logs[state.currentEx]=arr;
+    wrap.querySelectorAll('.po-hist-del').forEach(b=>{
+      b.addEventListener('click',()=>{
+        if(!confirm('Delete all sets for this day?')) return;
+        const date=b.dataset.date;
+        state.logs[state.currentEx]=(state.logs[state.currentEx]||[]).filter(l=>l.date.slice(0,10)!==date);
+        if(!(state.logs[state.currentEx]||[]).length) delete state.logs[state.currentEx];
+        saveState(); renderAll();
+      });
+    });
+  }
+  function renderTodaySets() {
+    const wrap=$('todaySetsWrap'), body=$('todaySetsBody'), ex=getCurrentEx();
+    if(!ex||!wrap) return;
+    const todayKey=new Date().toISOString().slice(0,10);
+    const todaySets=(state.logs[ex.id]||[]).filter(l=>l.date.slice(0,10)===todayKey);
+    if(!todaySets.length) { wrap.style.display='none'; return; }
+    wrap.style.display='';
+    body.innerHTML=todaySets.map((s,i)=>{
+      const setStr=ex.bw?(s.reps+' reps'):(s.weight+unit()+' × '+s.reps);
+      return '<div class="po-today-set-row">'
+        +'<span class="po-today-set-num">SET '+(i+1)+'</span>'
+        +'<span class="po-today-set-val">'+setStr+'</span>'
+        +'<button class="po-hist-del" data-date="'+s.date+'" data-w="'+s.weight+'" data-r="'+s.reps+'" aria-label="Remove set">×</button>'
+        +'</div>';
+    }).join('');
+    body.querySelectorAll('.po-hist-del').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const arr=state.logs[ex.id]||[];
+        const idx=arr.findIndex(l=>l.date===btn.dataset.date&&String(l.weight)===btn.dataset.w&&String(l.reps)===btn.dataset.r);
+        if(idx>=0) arr.splice(idx,1);
+        if(!arr.length) delete state.logs[ex.id]; else state.logs[ex.id]=arr;
         saveState(); renderAll();
       });
     });
@@ -994,7 +1060,7 @@ img, video, canvas, svg { max-width: 100%; }
   }
   function renderAll() {
     renderDayPill(); renderFilters(); renderSelect(); renderForm(); renderLastSet();
-    renderRepsRow(); renderRx(); renderStats(); renderSparkline(); renderHistory();
+    renderTodaySets(); renderRepsRow(); renderRx(); renderStats(); renderSparkline(); renderHistory();
     renderTodaysWorkout(); renderPastWorkouts();
     const ex=getCurrentEx();
     if(ex&&!ex.bw) { const logs=getLogs(); const w=logs.length?logs[logs.length-1].weight:(ex.startWeight||0); $('weightInput').value=w; }
@@ -1248,13 +1314,21 @@ img, video, canvas, svg { max-width: 100%; }
     const grid=$('wtPhotoGrid'), sorted=[...photos].sort((a,b)=>b.date.localeCompare(a.date));
     $('wtProgressCount').textContent=sorted.length+' photo'+(sorted.length===1?'':'s');
     if(!sorted.length){ grid.innerHTML='<div class="wt-photo-empty">No photos yet · tap Take Photo to start</div>'; return; }
+    const mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     grid.innerHTML=sorted.map((p,i)=>{
-      const dt=new Date(p.date+'T12:00:00'), mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const lbl=mons[dt.getMonth()]+' '+dt.getDate()+', '+dt.getFullYear();
+      const dt=new Date(p.date+'T12:00:00');
+      const lbl=mons[dt.getMonth()]+' '+dt.getDate();
       const wt=wtData.find(r=>r.date===p.date);
-      return '<div class="wt-photo-thumb" data-i="'+i+'"><img src="'+p.dataUrl+'" loading="lazy" alt="'+lbl+'"><div class="wt-photo-label">'+lbl+(wt?' · '+wt.weight+state.units:'')+'</div></div>';
+      return '<button type="button" class="wt-photo-card" data-i="'+i+'">'
+        +'<img src="'+p.dataUrl+'" loading="lazy" alt="'+lbl+'">'
+        +'<div class="wt-photo-overlay"></div>'
+        +'<div class="wt-photo-meta">'
+        +'<span class="wt-photo-date">'+lbl+'</span>'
+        +(wt?'<span class="wt-photo-weight">'+wt.weight+' '+state.units+'</span>':'')
+        +'</div>'
+        +'</button>';
     }).join('');
-    grid.querySelectorAll('.wt-photo-thumb').forEach(el=>{
+    grid.querySelectorAll('.wt-photo-card').forEach(el=>{
       el.addEventListener('click',()=>{ const i=parseInt(el.dataset.i,10); openPhotoViewer(sorted[i]); });
     });
   }
@@ -1280,7 +1354,28 @@ img, video, canvas, svg { max-width: 100%; }
     $('wtCompareHeadline').textContent=currentViewerPhoto.date+' vs '+other.date;
   });
 
-  function addPhoto(dataUrl) { const dk=wtDateKey(new Date()); photos.push({date:dk,dataUrl}); savePhotos(photos); renderPhotos(); wtRender(); }
+  // Resize + compress a data URL to max 1024px at JPEG 0.72 before saving.
+  // Keeps photos under ~200 KB each so localStorage stays within its ~5 MB limit.
+  function compressImage(dataUrl) {
+    return new Promise(resolve=>{
+      const img=new Image();
+      img.onload=()=>{
+        const MAX=1024; let w=img.width, h=img.height;
+        if(w>MAX||h>MAX){ if(w>h){ h=Math.round(h*MAX/w); w=MAX; }else{ w=Math.round(w*MAX/h); h=MAX; } }
+        const c=document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(c.toDataURL('image/jpeg',0.72));
+      };
+      img.onerror=()=>resolve(dataUrl);
+      img.src=dataUrl;
+    });
+  }
+  async function addPhoto(dataUrl) {
+    const compressed=await compressImage(dataUrl);
+    const dk=wtDateKey(new Date());
+    photos.push({date:dk,dataUrl:compressed});
+    savePhotos(photos); renderPhotos(); wtRender();
+  }
 
   let cameraStream=null, cameraFacingMode='environment';
   function startCamera(facing) {
