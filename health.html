@@ -225,6 +225,112 @@ main {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+/* ── Health sub-tabs ─────────────────────────────────────── */
+.health-tabs {
+  display: flex; gap: 4px; margin-bottom: 16px;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+  border-radius: 14px; padding: 4px;
+}
+.health-tab {
+  flex: 1; padding: 9px 14px; border-radius: 10px; border: none;
+  background: transparent; cursor: pointer;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-tertiary); transition: all 0.18s; font-family: inherit; font-size: 13px;
+}
+.health-tab.is-active { background: rgba(255,255,255,0.07); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.health-tab:hover:not(.is-active) { color: var(--text-secondary); }
+
+/* ── Google Fit card (all scoped under .fitness-section) ─── */
+.fitness-section {
+  --accent: #00B0B9; --accent-hi: #00D4DD;
+  --glass-border: transparent;
+  --glass-shadow: 0 1px 0 0 rgba(255,255,255,0.06) inset, 0 12px 40px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.25);
+}
+.fitness-section .fitbit-card { padding: 22px 22px 18px; background: rgba(255,255,255,0.025); border: 1px solid var(--glass-border); border-radius: 22px; box-shadow: var(--glass-shadow); transition: box-shadow 0.3s; }
+.fitness-section .fitbit-card:hover { box-shadow: 0 1px 0 0 rgba(255,255,255,0.08) inset, 0 18px 50px rgba(0,0,0,0.50); }
+.fitness-section .fitbit-brand { display: inline-flex; align-items: center; gap: 8px; }
+.fitness-section .fitbit-brand-mark { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, #00B0B9 0%, #008C93 100%); display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 0 12px rgba(0,176,185,0.35); }
+.fitness-section .fitbit-brand-mark svg { display: block; }
+.fitness-section .fitbit-brand-text { font-weight: 800; font-size: 13px; letter-spacing: 0.08em; color: var(--text-primary); }
+.fitness-section .fitbit-disconnected { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 18px 8px 8px; gap: 6px; }
+.fitness-section .fitbit-disconnected .fitbit-brand { margin-bottom: 14px; }
+.fitness-section .fitbit-disconnected-title { font-size: 22px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; margin-top: 2px; }
+.fitness-section .fitbit-disconnected-sub { font-size: 13px; color: var(--text-tertiary); max-width: 280px; line-height: 1.5; margin-bottom: 18px; }
+.fitness-section .fitbit-connect-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 22px; border-radius: 999px; border: 1px solid rgba(0,176,185,0.75); background: linear-gradient(180deg, #00C8D2 0%, #009CA4 100%); color: #0A0A0B; font-family: inherit; font-size: 13.5px; font-weight: 700; letter-spacing: 0.005em; cursor: pointer; transition: transform 0.12s, box-shadow 0.18s; box-shadow: inset 0 1px 0 rgba(255,255,255,0.30), 0 6px 20px rgba(0,176,185,0.35); }
+.fitness-section .fitbit-connect-btn:hover { transform: translateY(-1px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.40), 0 8px 24px rgba(0,176,185,0.50); }
+.fitness-section .fitbit-connect-btn:active { transform: translateY(0) scale(0.98); }
+.fitness-section .fitbit-auth-status { font-size: 11px; color: var(--text-tertiary); margin-top: 12px; min-height: 14px; font-style: italic; }
+.fitness-section .fitbit-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+.fitness-section .fitbit-live-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 9.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent-hi); margin-left: 4px; }
+.fitness-section .fitbit-live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-hi); box-shadow: 0 0 8px rgba(0,212,221,0.65); animation: gfit-pulse 1.6s ease-in-out infinite; }
+@keyframes gfit-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.85); } }
+.fitness-section .fitbit-header-right { display: flex; align-items: center; gap: 10px; }
+.fitness-section .fitbit-updated { font-size: 11px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+.fitness-section .fitbit-refresh-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.04); color: var(--text-secondary); cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; transition: background 0.18s, color 0.18s, transform 0.12s; flex-shrink: 0; }
+.fitness-section .fitbit-refresh-btn:hover { background: rgba(255,255,255,0.10); color: var(--text-primary); }
+.fitness-section .fitbit-refresh-btn:active { transform: rotate(180deg); }
+.fitness-section .fitbit-refresh-btn svg { display: block; }
+.fitness-section .fitbit-ring-wrap { position: relative; width: 240px; max-width: 78%; margin: 0 auto 24px; aspect-ratio: 1; }
+.fitness-section .fitbit-ring { width: 100%; height: 100%; transform: rotate(-90deg); filter: drop-shadow(0 0 24px rgba(0,176,185,0.12)); }
+.fitness-section .fitbit-ring-track { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 12; }
+.fitness-section .fitbit-ring-fill { fill: none; stroke: var(--accent); stroke-width: 12; stroke-linecap: round; stroke-dasharray: 603.19; stroke-dashoffset: 603.19; transition: stroke-dashoffset 0.8s cubic-bezier(0.22,1,0.36,1), stroke 0.4s; }
+.fitness-section .fitbit-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+.fitness-section .fitbit-ring-num { font-size: 48px; font-weight: 700; letter-spacing: -0.04em; color: var(--text-primary); line-height: 1; font-variant-numeric: tabular-nums; }
+.fitness-section .fitbit-ring-unit { font-size: 10px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-tertiary); margin-top: 10px; }
+.fitness-section .fitbit-ring-label { font-size: 12.5px; font-weight: 600; margin-top: 6px; letter-spacing: -0.005em; color: var(--text-secondary); }
+.fitness-section .fitbit-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.04); }
+.fitness-section .fitbit-stat { position: relative; background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px; padding: 12px 10px; text-align: center; transition: background 0.18s; }
+.fitness-section .fitbit-stat:hover { background: rgba(255,255,255,0.05); }
+.fitness-section .fitbit-stat-label { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700; margin-bottom: 8px; }
+.fitness-section .fitbit-stat-value { font-size: 22px; font-weight: 700; color: var(--text-primary); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+.fitness-section .fitbit-stat-sub { font-size: 10px; color: var(--text-tertiary); margin-top: 5px; font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+.fitness-section .fitbit-stages { margin-bottom: 22px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.04); }
+.fitness-section .fitbit-stages-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.fitness-section .fitbit-stages-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary); }
+.fitness-section .fitbit-stages-meta { font-size: 11px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+.fitness-section .fitbit-stages-bar { display: flex; height: 10px; background: rgba(255,255,255,0.04); border-radius: 999px; overflow: hidden; margin-bottom: 12px; }
+.fitness-section .fitbit-stage { height: 100%; transition: width 0.7s cubic-bezier(0.22,1,0.36,1); }
+.fitness-section .fitbit-stage-rem   { background: #00B0B9; }
+.fitness-section .fitbit-stage-deep  { background: #007B82; }
+.fitness-section .fitbit-stage-light { background: #4D4B47; }
+.fitness-section .fitbit-stage-awake { background: #2A2927; }
+.fitness-section .fitbit-stages-legend { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.fitness-section .fitbit-stages-leg { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); font-weight: 500; }
+.fitness-section .fitbit-stages-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.fitness-section .fitbit-stages-dot.d-rem   { background: #00B0B9; }
+.fitness-section .fitbit-stages-dot.d-deep  { background: #007B82; }
+.fitness-section .fitbit-stages-dot.d-light { background: #4D4B47; }
+.fitness-section .fitbit-stages-dot.d-awake { background: #2A2927; border: 1px solid rgba(255,255,255,0.06); }
+.fitness-section .fitbit-stages-num { margin-left: auto; color: var(--text-primary); font-weight: 700; font-variant-numeric: tabular-nums; font-family: var(--font-mono); font-size: 11px; }
+.fitness-section .fitbit-bio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.fitness-section .fitbit-bio-item { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 11px 12px; background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px; text-align: center; transition: background 0.18s; }
+.fitness-section .fitbit-bio-item:hover { background: rgba(255,255,255,0.05); }
+.fitness-section .fitbit-bio-label { font-size: 9.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-tertiary); }
+.fitness-section .fitbit-bio-val { font-size: 14px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.fitness-section .fitbit-zone { position: absolute; top: 9px; right: 9px; width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.12); transition: background 0.3s, box-shadow 0.3s; }
+.fitness-section .fitbit-zone.z-good { background: #6BE3A4; box-shadow: 0 0 7px rgba(107,227,164,0.55); }
+.fitness-section .fitbit-zone.z-norm { background: rgba(255,255,255,0.30); }
+.fitness-section .fitbit-zone.z-warn { background: #F2C063; box-shadow: 0 0 7px rgba(242,192,99,0.55); }
+.fitness-section .fitbit-zone.z-bad  { background: #FF8A8A; box-shadow: 0 0 7px rgba(255,138,138,0.55); }
+.fitness-section .fitbit-verdict { margin-top: 18px; padding: 16px 18px; background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.04); border-left: 2px solid rgba(0,176,185,0.55); border-radius: 0 12px 12px 0; }
+.fitness-section .fitbit-verdict-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.fitness-section .fitbit-verdict-eyebrow { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700; }
+.fitness-section .fitbit-verdict-badge { font-size: 9.5px; font-weight: 800; padding: 3px 9px; border-radius: 999px; letter-spacing: 0.14em; text-transform: uppercase; border: 1px solid; }
+.fitness-section .fitbit-verdict-headline { font-size: 15px; font-weight: 600; color: var(--text-primary); line-height: 1.4; margin-bottom: 12px; letter-spacing: -0.01em; }
+.fitness-section .fitbit-verdict-reasons { font-size: 12.5px; color: var(--text-secondary); line-height: 1.65; }
+.fitness-section .fitbit-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 14px; margin-top: 14px; padding: 10px 12px; background: rgba(255,255,255,0.02); border-radius: 999px; border: 1px solid rgba(255,255,255,0.04); }
+.fitness-section .fitbit-legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.04em; }
+.fitness-section .fitbit-legend-item .fitbit-zone { position: static; display: inline-block; }
+.fitness-section .fitbit-disconnect-btn { display: block; margin: 16px auto 0; padding: 7px 14px; background: transparent; border: 1px solid transparent; color: var(--text-tertiary); font-size: 11px; font-family: inherit; font-weight: 500; letter-spacing: 0.04em; border-radius: 999px; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+.fitness-section .fitbit-disconnect-btn:hover { color: var(--text-secondary); border-color: rgba(255,255,255,0.06); }
+@media (max-width: 480px) {
+  .fitness-section .fitbit-stats { grid-template-columns: repeat(2, 1fr); }
+  .fitness-section .fitbit-stat-value { font-size: 20px; }
+  .fitness-section .fitbit-stages-legend { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 380px) { .fitness-section .fitbit-bio { grid-template-columns: 1fr; } }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js"></script>
@@ -234,6 +340,11 @@ main {
 
 <main>
   <div class="section-title">Daily Stack</div>
+  <div class="health-tabs">
+    <button class="health-tab is-active" data-tab="stack">💊 Stack</button>
+    <button class="health-tab" data-tab="fitness">❤️ Fitness</button>
+  </div>
+  <div id="tabStack">
   <div class="stack-card">
     <div class="stack-ticker" id="stackTicker">
       <span class="stack-ticker-dot"></span>
@@ -269,6 +380,110 @@ main {
       </div>
     </div>
   </div>
+  </div><!-- /tabStack -->
+
+  <div id="tabFitness" hidden class="fitness-section">
+    <div class="fitbit-card">
+
+      <!-- DISCONNECTED -->
+      <div id="fitbitDisconnected" class="fitbit-disconnected">
+        <div class="fitbit-brand">
+          <span class="fitbit-brand-mark">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 5.5h4.25A6.5 6.5 0 1 1 3.3 2.3" stroke="white" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.9"/></svg>
+          </span>
+          <span class="fitbit-brand-text">GOOGLE FIT</span>
+        </div>
+        <div class="fitbit-disconnected-title">Not connected</div>
+        <div class="fitbit-disconnected-sub">Link your Google account to see steps, heart rate, sleep, and more.</div>
+        <button id="fitbitConnectBtn" class="fitbit-connect-btn" type="button">
+          Connect Google Fit
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 5 20 12 13 19"/></svg>
+        </button>
+        <div id="fitbitAuthStatus" class="fitbit-auth-status"></div>
+      </div>
+
+      <!-- CONNECTED -->
+      <div id="fitbitConnected" style="display:none">
+        <div class="fitbit-header">
+          <div class="fitbit-brand">
+            <span class="fitbit-brand-mark">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 5.5h4.25A6.5 6.5 0 1 1 3.3 2.3" stroke="white" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.9"/></svg>
+            </span>
+            <span class="fitbit-brand-text">GOOGLE FIT</span>
+            <span class="fitbit-live-tag"><span class="fitbit-live-dot"></span>live</span>
+          </div>
+          <div class="fitbit-header-right">
+            <span id="fitbitUpdated" class="fitbit-updated">loading…</span>
+            <button id="fitbitRefreshBtn" class="fitbit-refresh-btn" title="Refresh" aria-label="Refresh">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15A9 9 0 1 1 5.64 5.64L23 10"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="fitbit-ring-wrap">
+          <svg class="fitbit-ring" viewBox="0 0 220 220" aria-hidden="true">
+            <circle class="fitbit-ring-track" cx="110" cy="110" r="96"/>
+            <circle class="fitbit-ring-fill" cx="110" cy="110" r="96" id="fitbitStepsRingFill"/>
+          </svg>
+          <div class="fitbit-ring-center">
+            <div id="fitbitStepsValue" class="fitbit-ring-num">—</div>
+            <div class="fitbit-ring-unit">steps</div>
+            <div id="fitbitStepsLabel" class="fitbit-ring-label">—</div>
+          </div>
+        </div>
+
+        <div id="fitbitStages" class="fitbit-stages" style="display:none">
+          <div class="fitbit-stages-head">
+            <span class="fitbit-stages-eyebrow">Sleep stages</span>
+            <span class="fitbit-stages-meta" id="fitbitStagesMeta"></span>
+          </div>
+          <div class="fitbit-stages-bar">
+            <div class="fitbit-stage fitbit-stage-rem"   id="fitbitStageRem"   style="width:0%"></div>
+            <div class="fitbit-stage fitbit-stage-deep"  id="fitbitStageDeep"  style="width:0%"></div>
+            <div class="fitbit-stage fitbit-stage-light" id="fitbitStageLight" style="width:0%"></div>
+            <div class="fitbit-stage fitbit-stage-awake" id="fitbitStageAwake" style="width:0%"></div>
+          </div>
+          <div class="fitbit-stages-legend">
+            <div class="fitbit-stages-leg"><span class="fitbit-stages-dot d-rem"></span>REM <span id="fitbitStageRemTxt" class="fitbit-stages-num">—</span></div>
+            <div class="fitbit-stages-leg"><span class="fitbit-stages-dot d-deep"></span>Deep <span id="fitbitStageDeepTxt" class="fitbit-stages-num">—</span></div>
+            <div class="fitbit-stages-leg"><span class="fitbit-stages-dot d-light"></span>Light <span id="fitbitStageLightTxt" class="fitbit-stages-num">—</span></div>
+            <div class="fitbit-stages-leg"><span class="fitbit-stages-dot d-awake"></span>Awake <span id="fitbitStageAwakeTxt" class="fitbit-stages-num">—</span></div>
+          </div>
+        </div>
+
+        <div class="fitbit-stats">
+          <div class="fitbit-stat"><span class="fitbit-zone" id="fitbitZoneHr"></span><div class="fitbit-stat-label">Avg HR</div><div class="fitbit-stat-value" id="fitbitHr">—</div><div class="fitbit-stat-sub">bpm</div></div>
+          <div class="fitbit-stat"><span class="fitbit-zone" id="fitbitZoneRhr"></span><div class="fitbit-stat-label">Min HR</div><div class="fitbit-stat-value" id="fitbitRhr">—</div><div class="fitbit-stat-sub">bpm</div></div>
+          <div class="fitbit-stat"><span class="fitbit-zone" id="fitbitZoneActive"></span><div class="fitbit-stat-label">Active Min</div><div class="fitbit-stat-value" id="fitbitActive">—</div><div class="fitbit-stat-sub">today</div></div>
+          <div class="fitbit-stat"><span class="fitbit-zone" id="fitbitZoneSleep"></span><div class="fitbit-stat-label">Sleep</div><div class="fitbit-stat-value" id="fitbitSleepHours">—</div><div class="fitbit-stat-sub" id="fitbitSleepScore">—</div></div>
+        </div>
+
+        <div id="fitbitBio" class="fitbit-bio" style="display:none">
+          <div class="fitbit-bio-item"><span class="fitbit-bio-label">Calories</span><span class="fitbit-bio-val" id="fitbitCalories">—</span></div>
+          <div class="fitbit-bio-item"><span class="fitbit-bio-label">Distance</span><span class="fitbit-bio-val" id="fitbitDistance">—</span></div>
+          <div class="fitbit-bio-item"><span class="fitbit-bio-label">HR Max</span><span class="fitbit-bio-val" id="fitbitFloors">—</span></div>
+        </div>
+
+        <div class="fitbit-legend">
+          <span class="fitbit-legend-item"><span class="fitbit-zone z-good"></span>Goal met</span>
+          <span class="fitbit-legend-item"><span class="fitbit-zone z-norm"></span>Normal</span>
+          <span class="fitbit-legend-item"><span class="fitbit-zone z-warn"></span>Watch</span>
+          <span class="fitbit-legend-item"><span class="fitbit-zone z-bad"></span>Off target</span>
+        </div>
+
+        <div id="fitbitVerdict" class="fitbit-verdict" style="display:none">
+          <div class="fitbit-verdict-head">
+            <span class="fitbit-verdict-eyebrow">Today's summary</span>
+            <span id="fitbitVerdictBadge" class="fitbit-verdict-badge"></span>
+          </div>
+          <div id="fitbitVerdictHeadline" class="fitbit-verdict-headline"></div>
+          <div id="fitbitVerdictReasons" class="fitbit-verdict-reasons"></div>
+        </div>
+
+        <button id="fitbitDisconnectBtn" class="fitbit-disconnect-btn" type="button">Disconnect</button>
+      </div>
+    </div>
+  </div><!-- /tabFitness -->
 </main>
 
 <nav class="tabbar" aria-label="App navigation">
@@ -556,6 +771,268 @@ main {
 
   render();
   startTicker();
+})();
+</script>
+
+<script>
+/* ============================================================
+   TAB SWITCHER
+   ============================================================ */
+(function () {
+  const tabs       = document.querySelectorAll('.health-tab');
+  const tabStack   = document.getElementById('tabStack');
+  const tabFitness = document.getElementById('tabFitness');
+  const PREF_KEY   = 'health_active_tab';
+
+  function switchTab (name) {
+    tabs.forEach(t => t.classList.toggle('is-active', t.dataset.tab === name));
+    tabStack.hidden   = (name !== 'stack');
+    tabFitness.hidden = (name !== 'fitness');
+    localStorage.setItem(PREF_KEY, name);
+  }
+
+  tabs.forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
+
+  // Restore last active tab on load
+  if (localStorage.getItem(PREF_KEY) === 'fitness') switchTab('fitness');
+})();
+
+/* ============================================================
+   GOOGLE FIT — OAuth 2.0 + Fitness REST API
+   ============================================================ */
+(function () {
+  const CLIENT_ID    = '432390316260-pn72b0i2v94l94b1lpun2gkecfgj2bj7.apps.googleusercontent.com';
+  const REDIRECT_URI = 'https://claude-project-1-vert.vercel.app/index.html';
+  const SCOPES = [
+    'https://www.googleapis.com/auth/fitness.activity.read',
+    'https://www.googleapis.com/auth/fitness.heart_rate.read',
+    'https://www.googleapis.com/auth/fitness.sleep.read'
+  ].join(' ');
+  const GFIT_BASE = 'https://www.googleapis.com/fitness/v1';
+  const STEP_GOAL = 10000;
+  const TOKEN_KEY = 'gfit_tokens';
+  const STATE_KEY = 'gfit_oauth_state';
+
+  function getToken () {
+    try {
+      const t = JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null');
+      if (!t || Date.now() >= t.expires_at) { localStorage.removeItem(TOKEN_KEY); return null; }
+      return t.access_token;
+    } catch { return null; }
+  }
+  function clearToken () { localStorage.removeItem(TOKEN_KEY); }
+
+  function startAuth () {
+    const state = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+    localStorage.setItem(STATE_KEY, state);
+    location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
+      response_type: 'token', client_id: CLIENT_ID,
+      redirect_uri: REDIRECT_URI, scope: SCOPES,
+      state, include_granted_scopes: 'true'
+    });
+  }
+
+  async function gfitPost (path, token, body) {
+    const res = await fetch(GFIT_BASE + path, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (res.status === 401) { clearToken(); throw new Error('Unauthorized'); }
+    if (!res.ok) throw new Error(`Fitness API ${res.status}`);
+    return res.json();
+  }
+
+  async function fetchAllData (token) {
+    const now = Date.now();
+    const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+    const startMs    = todayStart.getTime();
+    const sleepStart = now - 28 * 60 * 60 * 1000;
+    const [actRes, sleepRes] = await Promise.allSettled([
+      gfitPost('/users/me/dataset:aggregate', token, {
+        aggregateBy: [
+          { dataTypeName: 'com.google.step_count.delta'  },
+          { dataTypeName: 'com.google.heart_rate.bpm'    },
+          { dataTypeName: 'com.google.calories.expended' },
+          { dataTypeName: 'com.google.distance.delta'    },
+          { dataTypeName: 'com.google.active_minutes'    }
+        ],
+        bucketByTime: { durationMillis: Math.max(now - startMs, 1) },
+        startTimeMillis: startMs, endTimeMillis: now
+      }),
+      gfitPost('/users/me/dataset:aggregate', token, {
+        aggregateBy:     [{ dataTypeName: 'com.google.sleep.segment' }],
+        bucketByTime:    { durationMillis: 28 * 60 * 60 * 1000 },
+        startTimeMillis: sleepStart, endTimeMillis: now
+      })
+    ]);
+    return {
+      activity: actRes.status   === 'fulfilled' ? actRes.value   : null,
+      sleep:    sleepRes.status === 'fulfilled' ? sleepRes.value : null
+    };
+  }
+
+  function getPoints (data, frag) {
+    const pts = [];
+    if (!data?.bucket) return pts;
+    for (const b of data.bucket)
+      for (const ds of (b.dataset || []))
+        if (ds.dataSourceId?.includes(frag)) pts.push(...(ds.point || []));
+    return pts;
+  }
+
+  function parseActivity (data) {
+    const steps     = getPoints(data, 'step_count').reduce((s,p) => s + (p.value?.[0]?.intVal ?? 0), 0);
+    const calories  = Math.round(getPoints(data, 'calories').reduce((s,p) => s + (p.value?.[0]?.fpVal ?? 0), 0));
+    const distanceM = getPoints(data, 'distance').reduce((s,p) => s + (p.value?.[0]?.fpVal ?? 0), 0);
+    const activeMin = getPoints(data, 'active_minutes').reduce((s,p) => s + (p.value?.[0]?.intVal ?? 0), 0);
+    const hrPts = getPoints(data, 'heart_rate');
+    let avgHr = null, maxHr = null, minHr = null;
+    if (hrPts.length) {
+      const p = hrPts[0];
+      if (p.value?.[0]?.fpVal) avgHr = Math.round(p.value[0].fpVal);
+      if (p.value?.[1]?.fpVal) maxHr = Math.round(p.value[1].fpVal);
+      if (p.value?.[2]?.fpVal) minHr = Math.round(p.value[2].fpVal);
+    }
+    return { steps, calories, distanceMi: distanceM / 1609.34, activeMin, avgHr, maxHr, minHr };
+  }
+
+  function parseSleep (data) {
+    const pts = getPoints(data, 'sleep.segment');
+    if (!pts.length) return null;
+    const mins = { rem: 0, deep: 0, light: 0, awake: 0 };
+    let totalSleep = 0;
+    for (const p of pts) {
+      const stage  = p.value?.[0]?.intVal;
+      const durMin = Math.round((parseInt(p.endTimeNanos) - parseInt(p.startTimeNanos)) / 1e9 / 60);
+      if (durMin <= 0) continue;
+      if      (stage === 6)                { mins.rem   += durMin; totalSleep += durMin; }
+      else if (stage === 5)                { mins.deep  += durMin; totalSleep += durMin; }
+      else if (stage === 4 || stage === 2) { mins.light += durMin; totalSleep += durMin; }
+      else if (stage === 1)                { mins.awake += durMin; }
+    }
+    return totalSleep > 0 ? { ...mins, total: totalSleep } : null;
+  }
+
+  function fmtMin (min) { const h = Math.floor(min/60), m = min%60; return h > 0 ? `${h}h ${m}m` : `${m}m`; }
+  function zoneClass (v, g, w, b) { return v >= g ? 'z-good' : v >= w ? 'z-norm' : v >= b ? 'z-warn' : 'z-bad'; }
+  function setZone (id, cls) { const el = document.getElementById(id); if (el) el.className = `fitbit-zone ${cls}`; }
+  function $(id) { return document.getElementById(id); }
+
+  function renderData (data) {
+    const act   = parseActivity(data.activity || {});
+    const sleep = parseSleep(data.sleep);
+
+    const pct  = Math.min(act.steps / STEP_GOAL, 1);
+    const circ = 603.19;
+    const fill = $('fitbitStepsRingFill');
+    fill.style.strokeDashoffset = circ - pct * circ;
+    fill.style.stroke = pct >= 1 ? '#6BE3A4' : pct >= 0.5 ? '#00B0B9' : '#76746E';
+    $('fitbitStepsValue').textContent = act.steps.toLocaleString();
+    $('fitbitStepsLabel').textContent = pct >= 1 ? 'Goal reached! 🎉' : `${Math.round(pct*100)}% of ${STEP_GOAL.toLocaleString()} goal`;
+
+    $('fitbitHr').textContent  = act.avgHr ?? '—';
+    $('fitbitRhr').textContent = act.minHr ?? '—';
+    if (act.avgHr) setZone('fitbitZoneHr',  act.avgHr < 70  ? 'z-good' : act.avgHr < 85  ? 'z-norm' : act.avgHr < 100 ? 'z-warn' : 'z-bad');
+    if (act.minHr) setZone('fitbitZoneRhr', act.minHr < 55  ? 'z-good' : act.minHr < 70  ? 'z-norm' : act.minHr < 85  ? 'z-warn' : 'z-bad');
+
+    $('fitbitActive').textContent = act.activeMin;
+    setZone('fitbitZoneActive', zoneClass(act.activeMin, 30, 15, 5));
+
+    if (sleep) {
+      $('fitbitSleepHours').textContent = fmtMin(sleep.total);
+      $('fitbitSleepScore').textContent = sleep.total >= 420 ? 'solid' : sleep.total >= 360 ? 'okay' : 'short';
+      setZone('fitbitZoneSleep', sleep.total >= 420 ? 'z-good' : sleep.total >= 360 ? 'z-norm' : sleep.total >= 300 ? 'z-warn' : 'z-bad');
+      const seg = sleep.total + sleep.awake;
+      if (seg > 0) {
+        $('fitbitStages').style.display  = '';
+        $('fitbitStagesMeta').textContent      = fmtMin(sleep.total);
+        $('fitbitStageRem').style.width        = `${sleep.rem  /seg*100}%`;
+        $('fitbitStageDeep').style.width       = `${sleep.deep /seg*100}%`;
+        $('fitbitStageLight').style.width      = `${sleep.light/seg*100}%`;
+        $('fitbitStageAwake').style.width      = `${sleep.awake/seg*100}%`;
+        $('fitbitStageRemTxt').textContent     = fmtMin(sleep.rem);
+        $('fitbitStageDeepTxt').textContent    = fmtMin(sleep.deep);
+        $('fitbitStageLightTxt').textContent   = fmtMin(sleep.light);
+        $('fitbitStageAwakeTxt').textContent   = fmtMin(sleep.awake);
+      }
+    } else {
+      $('fitbitSleepHours').textContent = '—';
+      $('fitbitSleepScore').textContent = 'no data';
+    }
+
+    if (act.calories || act.distanceMi || act.maxHr) {
+      $('fitbitBio').style.display = '';
+      $('fitbitCalories').textContent = act.calories ? `${act.calories.toLocaleString()} cal` : '—';
+      $('fitbitDistance').textContent = act.distanceMi > 0 ? `${act.distanceMi.toFixed(2)} mi` : '—';
+      $('fitbitFloors').textContent   = act.maxHr ? `${act.maxHr} bpm` : '—';
+    }
+
+    buildVerdict(act.steps, act.activeMin, sleep?.total ?? 0, act.minHr);
+    $('fitbitUpdated').textContent = `updated ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+  }
+
+  function buildVerdict (steps, activeMin, sleepMin, minHr) {
+    const stepPct = steps / STEP_GOAL;
+    const reasons = [];
+    if (stepPct >= 1)        reasons.push('✓ Daily step goal reached');
+    else if (stepPct >= 0.5) reasons.push(`${Math.round(stepPct*100)}% toward your step goal`);
+    else                     reasons.push('Still a ways to go on steps today');
+    if (activeMin >= 30)     reasons.push('✓ Hit the 30-min active threshold');
+    else                     reasons.push(`${activeMin} active minutes — aim for 30+`);
+    if (sleepMin >= 420)     reasons.push('✓ Solid 7+ hours of sleep');
+    else if (sleepMin > 0)   reasons.push(`${fmtMin(sleepMin)} of sleep — ${sleepMin < 360 ? 'consider an earlier bedtime' : 'close to goal'}`);
+    if (minHr && minHr < 60) reasons.push('✓ Low min HR — solid cardiovascular baseline');
+
+    const score = (stepPct >= 1 ? 2 : stepPct >= 0.5 ? 1 : 0) + (activeMin >= 30 ? 1 : 0) + (sleepMin >= 420 ? 1 : 0);
+    let zone, label, headline;
+    if      (score >= 3) { zone = 'z-good'; label = 'On track'; headline = 'Strong day — body is moving and recovering well.'; }
+    else if (score >= 2) { zone = 'z-norm'; label = 'Solid';    headline = "Good progress — a few more steps and you're there."; }
+    else if (score >= 1) { zone = 'z-warn'; label = 'Building'; headline = 'Getting started — keep the momentum going.'; }
+    else                 { zone = 'z-bad';  label = 'Low';      headline = 'Light day so far — even a short walk helps.'; }
+
+    const colorMap = { 'z-good': '#6BE3A4', 'z-norm': 'rgba(255,255,255,0.55)', 'z-warn': '#F2C063', 'z-bad': '#FF8A8A' };
+    const c = colorMap[zone];
+    $('fitbitVerdictBadge').textContent       = label;
+    $('fitbitVerdictBadge').style.color       = c;
+    $('fitbitVerdictBadge').style.borderColor = c;
+    $('fitbitVerdictBadge').style.background  = c.startsWith('#') ? c + '1a' : c.replace(')', ',0.12)').replace('rgba(rgba','rgba');
+    $('fitbitVerdictHeadline').textContent    = headline;
+    $('fitbitVerdictReasons').innerHTML       = reasons.map(r => `<div style="margin-bottom:4px">${r}</div>`).join('');
+    $('fitbitVerdict').style.display          = '';
+  }
+
+  function showDisconnected () {
+    $('fitbitDisconnected').style.display = '';
+    $('fitbitConnected').style.display    = 'none';
+  }
+
+  async function initConnectedUI () {
+    const token = getToken();
+    if (!token) { showDisconnected(); return; }
+    $('fitbitDisconnected').style.display = 'none';
+    $('fitbitConnected').style.display    = '';
+    try {
+      renderData(await fetchAllData(token));
+    } catch (e) {
+      if (e.message === 'Unauthorized') { showDisconnected(); return; }
+      $('fitbitUpdated').textContent = `error: ${e.message}`;
+    }
+  }
+
+  $('fitbitConnectBtn').addEventListener('click', startAuth);
+  $('fitbitDisconnectBtn').addEventListener('click', () => { clearToken(); showDisconnected(); });
+  $('fitbitRefreshBtn').addEventListener('click', async () => {
+    const btn = $('fitbitRefreshBtn');
+    btn.style.transform = 'rotate(360deg)';
+    setTimeout(() => btn.style.transform = '', 500);
+    const token = getToken();
+    if (!token) { showDisconnected(); return; }
+    try { renderData(await fetchAllData(token)); }
+    catch (e) { $('fitbitUpdated').textContent = `error: ${e.message}`; }
+  });
+
+  if (getToken()) initConnectedUI();
 })();
 </script>
 </body>
