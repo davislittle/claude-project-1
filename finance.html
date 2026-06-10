@@ -2119,28 +2119,110 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
   // ============================================================
   // STORAGE + SUPABASE SYNC
+  //
+  // localStorage is the source of truth for renders.
+  // On every write, the relevant consolidated Supabase row is also
+  // upserted (fire-and-continue; errors logged to console).
+  // On page load an async pull merges Supabase → localStorage.
+  //
+  // Supabase app_state rows used:
+  //   finance_accounts      { bank, stocks, crypto, other }
+  //   finance_subscriptions [ ...subs ]
+  //   finance_orders        [ ...orders ]
+  //   finance_wishlist      [ ...wishlist ]
+  //   finance_passive       { entries, recurring }
+  //   finance_nw_meta       { history, activity, currency }
   // ============================================================
   function storeGet(key) {
     try { const raw = localStorage.getItem(key); return raw == null ? null : JSON.parse(raw); }
     catch (e) { return null; }
   }
 
-  const _SB_URL  = 'https://onggaqxuriybodtyavsd.supabase.co';
-  const _SB_KEY  = 'sb_publishable__D6jwlREF6WQiFeFZe6j1A_0N59qzPr';
-  const _db      = supabase.createClient(_SB_URL, _SB_KEY);
-  const FINANCE_SYNC_KEYS = [
-    'nw:bank','nw:stocks','nw:crypto','nw:other',
-    'nw:history','nw:activity','nw_currency',
-    'subs','orders','wishlist',
-    'passive_income','passive_income_rec'
-  ];
-  function sbPush(key, val) {
-    try { _db.from('app_state').upsert({key, data: val, updated_at: new Date().toISOString()}, {onConflict:'key'}); } catch(e) {}
+  // ---- Supabase client (safe-guard in case CDN failed to load) ----
+  const _SB_URL = 'https://onggaqxuriybodtyavsd.supabase.co';
+  const _SB_KEY = 'sb_publishable__D6jwlREF6WQiFeFZe6j1A_0N59qzPr';
+  const _db = (window.supabase && window.supabase.createClient)
+    ? window.supabase.createClient(_SB_URL, _SB_KEY)
+    : null;
+
+  // ---- Map each localStorage key → which Supabase row it belongs to ----
+  const LS_TO_SB_KEY = {
+    'nw:bank':            'finance_accounts',
+    'nw:stocks':          'finance_accounts',
+    'nw:crypto':          'finance_accounts',
+    'nw:other':           'finance_accounts',
+    'subs':               'finance_subscriptions',
+    'orders':             'finance_orders',
+    'wishlist':           'finance_wishlist',
+    'passive_income':     'finance_passive',
+    'passive_income_rec': 'finance_passive',
+    'nw:history':         'finance_nw_meta',
+    'nw:activity':        'finance_nw_meta',
+    'nw_currency':        'finance_nw_meta',
+  };
+
+  // ---- Build the consolidated payload for a given Supabase row key ----
+  function _buildPayload(sbKey) {
+    switch (sbKey) {
+      case 'finance_accounts':
+        return { bank: storeGet('nw:bank') || [], stocks: storeGet('nw:stocks') || [],
+                 crypto: storeGet('nw:crypto') || [], other: storeGet('nw:other') || [] };
+      case 'finance_subscriptions': return storeGet('subs') || [];
+      case 'finance_orders':        return storeGet('orders') || [];
+      case 'finance_wishlist':      return storeGet('wishlist') || [];
+      case 'finance_passive':
+        return { entries: storeGet('passive_income') || [], recurring: storeGet('passive_income_rec') || [] };
+      case 'finance_nw_meta':
+        return { history: storeGet('nw:history') || [], activity: storeGet('nw:activity') || [],
+                 currency: storeGet('nw_currency') || 'USD' };
+      default: return null;
+    }
   }
 
+  // ---- Push one consolidated row to Supabase ----
+  function sbPush(sbKey) {
+    if (!_db) return;
+    const payload = _buildPayload(sbKey);
+    if (payload == null) return;
+    _db.from('app_state')
+      .upsert({ key: sbKey, data: payload, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+      .then(({ error }) => {
+        if (error) console.error('[Finance sync] write failed — key:', sbKey, '| error:', error.message,
+          '\n(If this is an RLS/permission error, disable Row-Level Security on the app_state table in your Supabase dashboard.)');
+      });
+  }
+
+  // ---- storeSet: write to localStorage then push the matching Supabase row ----
   function storeSet(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
-    if (FINANCE_SYNC_KEYS.includes(key)) sbPush(key, value);
+    const sbKey = LS_TO_SB_KEY[key];
+    if (sbKey) sbPush(sbKey);
+  }
+
+  // ---- Apply a Supabase row's data back into localStorage ----
+  function _applyRow(sbKey, sbData) {
+    if (!sbData) return false;
+    let wrote = false;
+    function _put(lsKey, val) {
+      if (val == null) return;
+      localStorage.setItem(lsKey, JSON.stringify(val));
+      wrote = true;
+    }
+    switch (sbKey) {
+      case 'finance_accounts':
+        _put('nw:bank', sbData.bank); _put('nw:stocks', sbData.stocks);
+        _put('nw:crypto', sbData.crypto); _put('nw:other', sbData.other);
+        break;
+      case 'finance_subscriptions': _put('subs', sbData); break;
+      case 'finance_orders':        _put('orders', sbData); break;
+      case 'finance_wishlist':      _put('wishlist', sbData); break;
+      case 'finance_passive':
+        _put('passive_income', sbData.entries); _put('passive_income_rec', sbData.recurring); break;
+      case 'finance_nw_meta':
+        _put('nw:history', sbData.history); _put('nw:activity', sbData.activity);
+        _put('nw_currency', sbData.currency); break;
+    }
+    return wrote;
   }
 
   // ============================================================
@@ -4049,27 +4131,45 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
   renderPassiveIncome();
 
-  // Pull all finance data from Supabase on load; re-render any section whose data changed.
-  (async () => {
-    try {
-      const { data } = await _db.from('app_state').select('key, data').in('key', FINANCE_SYNC_KEYS);
-      if (!data || !data.length) return;
-      let changed = false;
-      data.forEach(row => {
-        if (row.data == null) return;
-        const serialized = JSON.stringify(row.data);
-        if (localStorage.getItem(row.key) !== serialized) {
-          localStorage.setItem(row.key, serialized);
-          changed = true;
+  // ---- Sync finance data to/from Supabase on page load ----
+  if (_db) {
+    const _SB_FINANCE_KEYS = [
+      'finance_accounts','finance_subscriptions','finance_orders',
+      'finance_wishlist','finance_passive','finance_nw_meta'
+    ];
+
+    // 1. Pull: merge Supabase → localStorage; re-render if anything changed.
+    _db.from('app_state').select('key, data').in('key', _SB_FINANCE_KEYS)
+      .then(({ data: rows, error }) => {
+        if (error) {
+          console.error('[Finance sync] pull failed:', error.message,
+            '\n Tip: if this says "violates row-level security", open your Supabase dashboard → Table Editor → app_state → Policies and disable RLS or add a public insert/select policy.');
+          // Even if pull fails, push local data up so it at least saves.
+          _SB_FINANCE_KEYS.forEach(k => sbPush(k));
+          return;
+        }
+        if (!rows || !rows.length) {
+          // Table is empty on this key set — push local data to seed Supabase.
+          console.log('[Finance sync] No remote data found — pushing local data to Supabase now.');
+          _SB_FINANCE_KEYS.forEach(k => sbPush(k));
+          return;
+        }
+        // Apply Supabase data into localStorage.
+        let changed = false;
+        rows.forEach(row => { if (_applyRow(row.key, row.data)) changed = true; });
+        if (changed) {
+          renderAllNetWorth();
+          if (typeof renderSubs          === 'function') renderSubs();
+          if (typeof renderPassiveIncome === 'function') renderPassiveIncome();
+          console.log('[Finance sync] Loaded remote data from Supabase.');
+        } else {
+          console.log('[Finance sync] Local data matches Supabase — already in sync.');
+          // Local data exists but hasn't been pushed yet (e.g. first run after adding sync).
+          // Push it up so Supabase is populated.
+          _SB_FINANCE_KEYS.forEach(k => sbPush(k));
         }
       });
-      if (changed) {
-        renderAllNetWorth();
-        if (typeof renderSubs         === 'function') renderSubs();
-        if (typeof renderPassiveIncome === 'function') renderPassiveIncome();
-      }
-    } catch(e) {}
-  })();
+  }
 
 })();
 </script>
