@@ -1313,23 +1313,54 @@ img, video, canvas, svg { max-width: 100%; }
   function renderPhotos() {
     const grid=$('wtPhotoGrid'), sorted=[...photos].sort((a,b)=>b.date.localeCompare(a.date));
     $('wtProgressCount').textContent=sorted.length+' photo'+(sorted.length===1?'':'s');
-    if(!sorted.length){ grid.innerHTML='<div class="wt-photo-empty">No photos yet · tap Take Photo to start</div>'; return; }
+    // Clear existing content
+    grid.innerHTML='';
+    if(!sorted.length){
+      const empty=document.createElement('div');
+      empty.className='wt-photo-empty';
+      empty.textContent='No photos yet · tap Take Photo to start';
+      grid.appendChild(empty);
+      return;
+    }
     const mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    grid.innerHTML=sorted.map((p,i)=>{
+    sorted.forEach((p, i)=>{
       const dt=new Date(p.date+'T12:00:00');
       const lbl=mons[dt.getMonth()]+' '+dt.getDate();
       const wt=wtData.find(r=>r.date===p.date);
-      return '<button type="button" class="wt-photo-card" data-i="'+i+'">'
-        +'<img src="'+p.dataUrl+'" loading="lazy" alt="'+lbl+'">'
-        +'<div class="wt-photo-overlay"></div>'
-        +'<div class="wt-photo-meta">'
-        +'<span class="wt-photo-date">'+lbl+'</span>'
-        +(wt?'<span class="wt-photo-weight">'+wt.weight+' '+state.units+'</span>':'')
-        +'</div>'
-        +'</button>';
-    }).join('');
-    grid.querySelectorAll('.wt-photo-card').forEach(el=>{
-      el.addEventListener('click',()=>{ const i=parseInt(el.dataset.i,10); openPhotoViewer(sorted[i]); });
+
+      const btn=document.createElement('button');
+      btn.type='button'; btn.className='wt-photo-card';
+
+      // Set src via property — never via innerHTML — so the full base64
+      // string reaches the img element without going through an HTML parser
+      // that may silently drop or truncate very long attribute values.
+      const img=document.createElement('img');
+      img.alt=lbl;
+      img.src=p.dataUrl;
+
+      const overlay=document.createElement('div');
+      overlay.className='wt-photo-overlay';
+
+      const meta=document.createElement('div');
+      meta.className='wt-photo-meta';
+
+      const dateEl=document.createElement('span');
+      dateEl.className='wt-photo-date';
+      dateEl.textContent=lbl;
+      meta.appendChild(dateEl);
+
+      if(wt){
+        const wtEl=document.createElement('span');
+        wtEl.className='wt-photo-weight';
+        wtEl.textContent=wt.weight+' '+state.units;
+        meta.appendChild(wtEl);
+      }
+
+      btn.appendChild(img);
+      btn.appendChild(overlay);
+      btn.appendChild(meta);
+      btn.addEventListener('click', ()=>openPhotoViewer(p));
+      grid.appendChild(btn);
     });
   }
   function openPhotoViewer(p) {
@@ -1360,11 +1391,16 @@ img, video, canvas, svg { max-width: 100%; }
     return new Promise(resolve=>{
       const img=new Image();
       img.onload=()=>{
-        const MAX=1024; let w=img.width, h=img.height;
+        const MAX=1024;
+        // naturalWidth/naturalHeight are reliable for off-DOM images; width/height may return 0
+        let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+        if(!w||!h){ resolve(dataUrl); return; }
         if(w>MAX||h>MAX){ if(w>h){ h=Math.round(h*MAX/w); w=MAX; }else{ w=Math.round(w*MAX/h); h=MAX; } }
         const c=document.createElement('canvas'); c.width=w; c.height=h;
         c.getContext('2d').drawImage(img,0,0,w,h);
-        resolve(c.toDataURL('image/jpeg',0.72));
+        const result=c.toDataURL('image/jpeg',0.72);
+        // Guard against canvas returning a blank/empty result (e.g. iOS memory pressure)
+        resolve(result&&result.length>200?result:dataUrl);
       };
       img.onerror=()=>resolve(dataUrl);
       img.src=dataUrl;
